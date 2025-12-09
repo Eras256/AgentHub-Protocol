@@ -1,0 +1,37 @@
+# Source files
+src/
+cli/
+__tests__/
+coverage/
+
+# Development files
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+jest.config.js
+tsconfig.json
+tsconfig.test.json
+tsup.config.ts
+
+# Dependencies
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build artifacts (keep dist/)
+*.log
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+

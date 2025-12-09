@@ -1,0 +1,16 @@
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.out
+*.app
+*.i86
+*.dSYM/
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
