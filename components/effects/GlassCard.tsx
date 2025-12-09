@@ -9,6 +9,8 @@ interface GlassCardProps {
   className?: string;
   hover?: boolean;
   glow?: "purple" | "blue" | "cyan" | "pink";
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 export default function GlassCard({
@@ -16,6 +18,8 @@ export default function GlassCard({
   className,
   hover = true,
   glow = "purple",
+  onMouseEnter,
+  onMouseLeave,
 }: GlassCardProps) {
   const glowColors = {
     purple:
@@ -31,6 +35,8 @@ export default function GlassCard({
       animate={{ opacity: 1, y: 0 }}
       whileHover={hover ? { scale: 1.02, y: -5 } : {}}
       transition={{ duration: 0.3 }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       className={cn(
         // Glassmorphism base
         "relative backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5",

@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  Github,
   Twitter,
-  MessageCircle,
   Zap,
   ExternalLink,
 } from "lucide-react";
@@ -33,20 +31,14 @@ export default function Footer() {
       { label: "Kite AI", href: "https://gokite.ai", external: true },
     ],
     community: [
-      {
-        label: "Telegram",
-        href: "https://t.me/avalancheacademy",
-        icon: MessageCircle,
-      },
-      { label: "Twitter", href: "https://twitter.com/agenthub", icon: Twitter },
-      { label: "GitHub", href: "https://github.com/yourusername", icon: Github },
+      { label: "X (Twitter)", href: "https://twitter.com/agenthub", icon: Twitter },
     ],
   };
 
   return (
     <footer className="relative border-t border-white/10 backdrop-blur-xl bg-black/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-6 sm:mb-8">
           {/* Brand */}
           <div className="col-span-1">
             <Link
@@ -136,35 +128,33 @@ export default function Footer() {
           {/* Hackathon Info */}
           <div>
             <h3 className="text-white font-semibold mb-4">Hack2Build 2025</h3>
-            <div className="space-y-3">
-              <div className="p-3 bg-gradient-to-br from-purple-600/20 to-cyan-600/20 rounded-lg border border-purple-500/30">
-                <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                  $25,000
-                </div>
-                <div className="text-xs text-gray-400">Prize Pool</div>
-              </div>
-              <div className="text-xs text-gray-400">
-                Built for Avalanche Hack2Build: Payments x402 Edition
-              </div>
+            <div className="text-xs text-gray-400">
+              Built for Avalanche Hack2Build: Payments x402 Edition
             </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-          <p className="text-gray-400 text-sm">
-            © 2025 AgentHub Protocol. Built on{" "}
-            <a
-              href="https://avax.network"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-purple-400 hover:text-purple-300 transition-colors"
-              tabIndex={0}
-            >
-              Avalanche
-            </a>
-          </p>
-          <div className="flex space-x-6 text-sm">
+        <div className="pt-6 sm:pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center space-y-3 sm:space-y-4 md:space-y-0">
+          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 text-center sm:text-left">
+            <p className="text-gray-400 text-xs sm:text-sm">
+              © 2025 AgentHub Protocol. Built on{" "}
+              <a
+                href="https://avax.network"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-400 hover:text-purple-300 transition-colors"
+                tabIndex={0}
+              >
+                Avalanche
+              </a>
+            </p>
+            <p className="text-gray-500 text-xs sm:text-sm">
+              Made by{" "}
+              <span className="text-purple-400 font-semibold">Vaiosx & M0nssx</span>
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center sm:justify-end gap-3 sm:gap-6 text-xs sm:text-sm">
             <Link
               href="/privacy"
               className="text-gray-400 hover:text-white transition-colors"
