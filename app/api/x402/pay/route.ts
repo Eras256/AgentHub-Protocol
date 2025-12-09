@@ -1,15 +1,15 @@
 // x402 payment API route
-// Based on x402-starter-kit: https://github.com/federiconardelli7/x402-starter-kit
-// Initiates payment via Thirdweb facilitator (ERC4337 Smart Account)
+// Official Thirdweb x402 facilitator integration for Avalanche Fuji
+// Reference: https://portal.thirdweb.com/x402/server
 
 import { NextRequest, NextResponse } from "next/server";
-import { ThirdwebSDK } from "@thirdweb-dev/sdk";
-import { AvalancheFuji } from "@thirdweb-dev/chains";
+import { settlePayment } from "thirdweb/x402";
+import { thirdwebX402Facilitator, avalancheFuji } from "@/lib/x402/facilitator";
 import { PAYMENT_TIERS } from "@/lib/x402/middleware";
 
 export async function POST(req: NextRequest) {
   try {
-    const { amount, token, chain, recipient, tier } = await req.json();
+    const { amount, token, tier, resourceUrl } = await req.json();
 
     // Validate required environment variables
     if (!process.env.THIRDWEB_SECRET_KEY) {
@@ -26,64 +26,61 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!process.env.MERCHANT_WALLET_ADDRESS) {
-      return NextResponse.json(
-        { error: "MERCHANT_WALLET_ADDRESS not configured" },
-        { status: 500 }
-      );
-    }
-
     // Determine payment amount based on tier
-    const paymentAmount = tier && PAYMENT_TIERS[tier]
-      ? PAYMENT_TIERS[tier].amount
+    const paymentAmount = tier && tier in PAYMENT_TIERS
+      ? PAYMENT_TIERS[tier as keyof typeof PAYMENT_TIERS].amount
       : amount || PAYMENT_TIERS.basic.amount;
 
-    const merchantAddress = process.env.MERCHANT_WALLET_ADDRESS;
-    const facilitatorAddress = process.env.THIRDWEB_SERVER_WALLET_ADDRESS;
+    // Get payment data from request headers
+    const paymentData = req.headers.get("x-payment");
 
-    // Initialize Thirdweb SDK
-    const sdk = ThirdwebSDK.fromPrivateKey(
-      process.env.THIRDWEB_SECRET_KEY,
-      AvalancheFuji,
-      {
-        secretKey: process.env.THIRDWEB_SECRET_KEY,
-      }
-    );
-
-    // Get USDC contract (Avalanche Fuji testnet USDC)
-    // Note: Replace with actual USDC contract address on Fuji
-    const usdcAddress = process.env.USDC_CONTRACT_ADDRESS || "0x5425890298aed601595a70AB815c96711a31Bc65"; // Fuji USDC testnet
-    
-    const usdcContract = await sdk.getContract(usdcAddress);
-
-    // Convert amount to wei (USDC has 6 decimals)
-    const amountInWei = BigInt(Math.floor(parseFloat(paymentAmount) * 1e6));
-
-    // Transfer USDC from facilitator to merchant
-    // Using ERC4337 Smart Account as facilitator
-    const tx = await usdcContract.erc20.transfer(
-      merchantAddress,
-      amountInWei.toString()
-    );
-
-    // Wait for transaction confirmation
-    const receipt = await tx.receipt();
-
-    return NextResponse.json({
-      success: true,
-      txHash: receipt.transactionHash,
-      amount: paymentAmount,
-      token: token || "USDC",
-      chain: chain || "avalanche-fuji",
-      recipient: merchantAddress,
-      facilitator: facilitatorAddress,
+    // Use settlePayment from thirdweb/x402 for official integration
+    // This handles the entire payment flow including verification and settlement
+    const result = await settlePayment({
+      resourceUrl: resourceUrl || req.url || "https://api.agenthub.protocol/premium",
+      method: "POST",
+      paymentData: paymentData || undefined,
+      payTo: process.env.THIRDWEB_SERVER_WALLET_ADDRESS,
+      network: avalancheFuji,
+      price: `$${paymentAmount}`,
+      facilitator: thirdwebX402Facilitator,
     });
+
+    if (result.status === 200) {
+      // Payment successful
+      const txHash = result.paymentReceipt?.transaction || "unknown";
+      
+      return NextResponse.json({
+        success: true,
+        txHash: txHash,
+        amount: paymentAmount,
+        token: token || "USDC",
+        chain: "avalanche-fuji",
+        recipient: process.env.THIRDWEB_SERVER_WALLET_ADDRESS,
+        facilitator: process.env.THIRDWEB_SERVER_WALLET_ADDRESS,
+      }, {
+        headers: result.responseHeaders,
+      });
+    } else {
+      // Payment required or failed
+      return NextResponse.json(
+        result.responseBody || {
+          error: "Payment required",
+          message: `This endpoint requires payment of ${paymentAmount} ${token || "USDC"}`,
+        },
+        {
+          status: result.status,
+          headers: result.responseHeaders,
+        }
+      );
+    }
   } catch (error) {
     console.error("x402 payment error:", error);
     return NextResponse.json(
       {
         error: "Payment failed",
         message: error instanceof Error ? error.message : "Unknown error",
+        details: process.env.NODE_ENV === "development" ? String(error) : undefined,
       },
       { status: 500 }
     );

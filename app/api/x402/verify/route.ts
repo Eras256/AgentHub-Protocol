@@ -1,9 +1,10 @@
 // x402 payment verification API route
-// Verifies payment transaction on-chain
+// Verifies payment transaction on-chain using Thirdweb v5
 
 import { NextRequest, NextResponse } from "next/server";
-import { ThirdwebSDK } from "@thirdweb-dev/sdk";
-import { AvalancheFuji } from "@thirdweb-dev/chains";
+import { getRpcClient } from "thirdweb";
+import { avalancheFuji } from "thirdweb/chains";
+import { thirdwebClient, getMerchantAddress } from "@/lib/x402/facilitator";
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,17 +24,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Initialize Thirdweb SDK
-    const sdk = ThirdwebSDK.fromPrivateKey(
-      process.env.THIRDWEB_SECRET_KEY,
-      AvalancheFuji,
-      {
-        secretKey: process.env.THIRDWEB_SECRET_KEY,
-      }
-    );
+    // Get RPC client using Thirdweb v5
+    const rpcClient = getRpcClient({
+      client: thirdwebClient,
+      chain: avalancheFuji,
+    });
 
     // Get transaction receipt
-    const receipt = await sdk.getProvider().getTransactionReceipt(txHash);
+    const receipt = await rpcClient({
+      method: "eth_getTransactionReceipt",
+      params: [txHash],
+    });
 
     if (!receipt) {
       return NextResponse.json({
@@ -43,21 +44,20 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Check transaction status
-    const isConfirmed = receipt.status === 1; // 1 = success, 0 = failed
+    // Check transaction status (0x1 = success, 0x0 = failed)
+    const isConfirmed = receipt.status === "0x1";
 
     // Verify transaction is to merchant address
     let isToMerchant = true;
-    if (process.env.MERCHANT_WALLET_ADDRESS) {
+    if (process.env.MERCHANT_WALLET_ADDRESS && receipt.to) {
       isToMerchant =
-        receipt.to?.toLowerCase() ===
-        process.env.MERCHANT_WALLET_ADDRESS.toLowerCase();
+        receipt.to.toLowerCase() === getMerchantAddress().toLowerCase();
     }
 
     return NextResponse.json({
       verified: isConfirmed && isToMerchant,
       confirmed: isConfirmed,
-      blockNumber: receipt.blockNumber,
+      blockNumber: receipt.blockNumber ? parseInt(receipt.blockNumber, 16) : undefined,
       status: receipt.status,
       to: receipt.to,
       from: receipt.from,

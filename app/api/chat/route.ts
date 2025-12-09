@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
+import { generateContentWithFallback } from "@/lib/ai/gemini";
+
+// Force Node.js runtime for Vercel
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json();
 
-    // Check if Google Gemini API key is available
-    if (!process.env.GOOGLE_GEMINI_API_KEY) {
-      // Return mock response if no API key
+    // Check if Gemini API key is available
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+    if (!apiKey) {
       return NextResponse.json({
-        content:
-          "I'm currently running in demo mode. To enable full AI capabilities, please configure GOOGLE_GEMINI_API_KEY in your environment variables.",
+        success: false,
+        error: "GEMINI_API_KEY not configured",
+        content: "I'm currently running in demo mode. To enable full AI capabilities, please configure GEMINI_API_KEY in your environment variables.",
       });
     }
-
-    // Dynamic import to avoid issues if package is not installed
-    const { GoogleGenerativeAI } = await import("@google/generative-ai");
-
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     // System instruction for the assistant
     const systemInstruction = `You are an AI assistant for AgentHub Protocol, a platform for autonomous AI agents on Avalanche blockchain.
@@ -32,60 +31,42 @@ You help users with:
 
 Be concise, helpful, and technical when needed. Use emojis sparingly. Format code blocks with markdown.`;
 
-    // Build conversation history for Gemini
-    // Gemini expects alternating user/model messages in history
-    // Include system instruction as first message in history
-    const history: any[] = [
-      {
-        role: "user",
-        parts: [{ text: systemInstruction }],
-      },
-      {
-        role: "model",
-        parts: [{ text: "I understand. I'm ready to help with AgentHub Protocol." }],
-      },
-    ];
+    // Build conversation context from message history
+    // For simplicity, we'll use the last few messages as context
+    const recentMessages = messages.slice(-6); // Last 6 messages for context
+    let conversationContext = systemInstruction + "\n\nConversation history:\n";
     
-    // Process all messages except the last one (which is the current user query)
-    const messagesForHistory = messages.slice(0, -1);
-    
-    for (let i = 0; i < messagesForHistory.length; i++) {
-      const msg = messagesForHistory[i];
-      if (msg.role === "user") {
-        history.push({
-          role: "user",
-          parts: [{ text: msg.content }],
-        });
-      } else if (msg.role === "assistant" && i > 0) {
-        // Only add assistant message if there was a user message before
-        history.push({
-          role: "model",
-          parts: [{ text: msg.content }],
-        });
-      }
+    for (const msg of recentMessages.slice(0, -1)) {
+      conversationContext += `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}\n`;
     }
 
     // Get the last user message (current query)
     const lastMessage = messages[messages.length - 1];
     const userQuery = lastMessage?.content || "";
 
-    // Start chat with history
-    const chat = model.startChat({
-      history: history,
-    });
+    // Build full prompt
+    const fullPrompt = `${conversationContext}\n\nUser: ${userQuery}\n\nAssistant:`;
 
-    // Send the last user message
-    const result = await chat.sendMessage(userQuery);
-    const response = await result.response;
-    const text = response.text();
+    // Use the improved generateContentWithFallback function
+    const aiResponse = await generateContentWithFallback(fullPrompt, undefined, {
+      temperature: 0.7,
+      topP: 0.9,
+      topK: 40,
+      maxOutputTokens: 1024,
+    });
 
     return NextResponse.json({
-      content: text,
+      success: true,
+      content: aiResponse.content,
+      model: aiResponse.model, // Log which model was used
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Chat API error:", error);
     return NextResponse.json(
-      { error: "Failed to get AI response" },
+      {
+        success: false,
+        error: error.message || "Failed to get AI response",
+      },
       { status: 500 }
     );
   }

@@ -41,7 +41,11 @@ export class GeminiUIAutomator {
   }) {
     this.task = config.task;
     this.browserState = config.browserState;
-    this.actions = config.actions || ["click", "type", "scroll"];
+    this.actions = config.actions || [
+      { type: "click" },
+      { type: "type" },
+      { type: "scroll" }
+    ];
   }
 
   /**
@@ -188,7 +192,11 @@ export function createDEXAutomator(task: string, screenshot?: string): GeminiUIA
       url: "https://traderjoexyz.com",
       viewport: { width: 1920, height: 1080 },
     },
-    actions: ["click", "type", "scroll"],
+    actions: [
+      { type: "click" },
+      { type: "type" },
+      { type: "scroll" }
+    ],
   });
 }
 

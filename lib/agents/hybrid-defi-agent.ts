@@ -1,9 +1,23 @@
 // Hybrid DeFi Agent: Gemini (analysis) + Kite AI (on-chain attribution)
-// Example implementation of the hybrid architecture
+// Real DeFi protocol integrations with Trader Joe, Benqi, and Aave
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { HybridAIAgent, Decision } from "../ai/hybrid-agent";
-import { initiateX402Payment } from "../x402/client";
+import { ethers } from "ethers";
+import {
+  executeSwap,
+  getSwapQuote,
+  supplyToBenqi,
+  borrowFromBenqi,
+  repayToBenqi,
+  withdrawFromBenqi,
+  supplyToAave,
+  borrowFromAave,
+  repayToAave,
+  withdrawFromAave,
+  getAaveProviderAddress,
+  type SwapParams,
+} from "../defi";
 
 export interface PortfolioData {
   balances: Record<string, number>;
@@ -29,15 +43,36 @@ export interface DeFiDecision {
 /**
  * Hybrid DeFi Agent
  * Uses Gemini for analysis, Kite AI for on-chain attribution
+ * Real integrations with Trader Joe, Benqi, and Aave
  */
 export class DeFiAgent {
   private gemini: GoogleGenerativeAI;
   private hybridAgent: HybridAIAgent;
   private agentId: string;
+  private signer?: ethers.Signer;
+  private network: "avalanche-fuji" | "avalanche-mainnet";
+  private protocolConfig: {
+    benqiComptroller?: string;
+    aaveProvider?: string;
+  };
 
-  constructor(agentId?: string) {
+  constructor(
+    agentId?: string,
+    signer?: ethers.Signer,
+    network: "avalanche-fuji" | "avalanche-mainnet" = "avalanche-fuji",
+    protocolConfig?: {
+      benqiComptroller?: string;
+      aaveProvider?: string;
+    }
+  ) {
     this.agentId = agentId || this.generateAgentId();
     this.gemini = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!);
+    this.signer = signer;
+    this.network = network;
+    this.protocolConfig = protocolConfig || {
+      benqiComptroller: process.env.BENQI_COMPTROLLER_ADDRESS,
+      aaveProvider: process.env.AAVE_PROVIDER_ADDRESS || getAaveProviderAddress(network),
+    };
     
     // Initialize hybrid agent with Kite AI support
     const useKiteAI = !!process.env.KITE_API_KEY;
@@ -146,9 +181,9 @@ Format as JSON with: analysis, recommendations (array), riskLevel, expectedROI`;
   }
 
   /**
-   * Execute trade via x402 payment
+   * Execute DeFi operation on real protocols
    */
-  async executeX402Trade(decision: DeFiDecision): Promise<{
+  async executeDeFiOperation(decision: DeFiDecision): Promise<{
     success: boolean;
     txHash?: string;
     error?: string;
@@ -157,18 +192,125 @@ Format as JSON with: analysis, recommendations (array), riskLevel, expectedROI`;
       return { success: false, error: "No action to execute" };
     }
 
+    if (!this.signer) {
+      return { success: false, error: "Signer not provided - cannot execute on-chain operations" };
+    }
+
     try {
-      // Calculate payment amount (mock - in production, this would be actual trade amount)
-      const amount = decision.amount?.toString() || "0.01";
+      const protocol = (decision.protocol || "").toLowerCase();
+      const action = decision.action;
+      const amount = decision.amount || 0;
+      const token = decision.token || "";
 
-      const paymentResult = await initiateX402Payment({
-        amount,
-        token: "USDC",
-        chain: "avalanche-fuji",
-        recipient: `protocol-${decision.protocol || "traderjoe"}`,
-      });
+      // Convert amount to wei/decimals (simplified - assumes 18 decimals for most tokens)
+      const amountWei = ethers.parseUnits(amount.toString(), 18);
 
-      return paymentResult;
+      if (action === "swap") {
+        // Execute swap on Trader Joe
+        if (!token) {
+          return { success: false, error: "Token address required for swap" };
+        }
+
+        // Get token addresses (simplified - in production, use token registry)
+        const tokenIn = token; // Should be actual token address
+        const tokenOut = "USDC"; // Should be actual token address
+
+        const swapParams: SwapParams = {
+          tokenIn,
+          tokenOut,
+          amountIn: amountWei.toString(),
+          slippageTolerance: 300, // 3%
+        };
+
+        // Get quote first
+        const quote = await getSwapQuote(
+          this.signer.provider!,
+          tokenIn,
+          tokenOut,
+          amountWei.toString(),
+          this.network
+        );
+
+        swapParams.amountOutMin = quote.amountOut;
+
+        const result = await executeSwap(this.signer, swapParams, this.network);
+        return result;
+      } else if (action === "deposit") {
+        // Supply to lending protocol
+        if (protocol.includes("benqi")) {
+          if (!this.protocolConfig.benqiComptroller) {
+            return { success: false, error: "Benqi Comptroller address not configured" };
+          }
+
+          const result = await supplyToBenqi(
+            this.signer,
+            {
+              asset: token || "AVAX",
+              amount: amountWei.toString(),
+            },
+            this.protocolConfig.benqiComptroller,
+            this.network
+          );
+          return result;
+        } else if (protocol.includes("aave")) {
+          if (!this.protocolConfig.aaveProvider) {
+            return { success: false, error: "Aave Provider address not configured" };
+          }
+
+          const result = await supplyToAave(
+            this.signer,
+            {
+              asset: token || "AVAX",
+              amount: amountWei.toString(),
+            },
+            this.protocolConfig.aaveProvider,
+            this.network
+          );
+          return result;
+        } else {
+          return { success: false, error: `Unknown protocol: ${protocol}` };
+        }
+      } else if (action === "withdraw") {
+        // Withdraw from lending protocol
+        if (protocol.includes("benqi")) {
+          if (!this.protocolConfig.benqiComptroller) {
+            return { success: false, error: "Benqi Comptroller address not configured" };
+          }
+
+          const result = await withdrawFromBenqi(
+            this.signer,
+            {
+              asset: token || "AVAX",
+              amount: "max", // Withdraw all
+            },
+            this.network
+          );
+          return result;
+        } else if (protocol.includes("aave")) {
+          if (!this.protocolConfig.aaveProvider) {
+            return { success: false, error: "Aave Provider address not configured" };
+          }
+
+          const result = await withdrawFromAave(
+            this.signer,
+            {
+              asset: token || "AVAX",
+              amount: "max", // Withdraw all
+            },
+            this.protocolConfig.aaveProvider,
+            this.network
+          );
+          return result;
+        } else {
+          return { success: false, error: `Unknown protocol: ${protocol}` };
+        }
+      } else if (action === "rebalance") {
+        // Rebalancing typically involves multiple operations
+        // For now, return a placeholder
+        return { success: false, error: "Rebalancing requires multiple operations - not yet implemented" };
+      } else {
+        return { success: false, error: `Unknown action: ${action}` };
+      }
     } catch (error) {
       return {
         success: false,
@@ -204,12 +346,12 @@ Format as JSON with: analysis, recommendations (array), riskLevel, expectedROI`;
     // Step 3: Record decision on-chain with Kite AI (verifiable, attribution)
     const { proof, txHash } = await this.recordDecision(decision);
 
-    // Step 4: Execute via x402 if recommended
+    // Step 4: Execute on real DeFi protocols if recommended
     let executionResult;
     if (analysis.recommendations.length > 0) {
       const topRec = analysis.recommendations[0];
       if (topRec.action !== "wait" && topRec.confidence > 70) {
-        executionResult = await this.executeX402Trade(topRec);
+        executionResult = await this.executeDeFiOperation(topRec);
       }
     }
 
