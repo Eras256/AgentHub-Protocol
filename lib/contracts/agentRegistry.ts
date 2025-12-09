@@ -162,14 +162,21 @@ export async function getAgent(signerOrProvider: ethers.Signer | ethers.Provider
 
 export async function getAllAgentsByOwner(signerOrProvider: ethers.Signer | ethers.Provider, ownerAddress: string) {
   try {
+    console.log("getAllAgentsByOwner - Starting, ownerAddress:", ownerAddress);
+    console.log("getAllAgentsByOwner - signerOrProvider type:", signerOrProvider?.constructor?.name);
+    
     // Normalize address to avoid ENS resolution (Avalanche doesn't support ENS)
     const normalizedOwnerAddress = normalizeAddress(ownerAddress);
+    console.log("getAllAgentsByOwner - Normalized address:", normalizedOwnerAddress);
     
+    console.log("getAllAgentsByOwner - Getting contract...");
     const contract = await getAgentRegistryContract(signerOrProvider);
-    console.log("Calling getAllAgentsByOwner for:", normalizedOwnerAddress);
+    console.log("getAllAgentsByOwner - Contract obtained, address:", contract.target);
     
+    console.log("getAllAgentsByOwner - Calling getAllAgentsByOwner on contract for:", normalizedOwnerAddress);
     const agentIds = await contract.getAllAgentsByOwner(normalizedOwnerAddress);
-    console.log("Agent IDs from contract:", agentIds);
+    console.log("getAllAgentsByOwner - Agent IDs from contract:", agentIds);
+    console.log("getAllAgentsByOwner - Agent IDs count:", agentIds?.length || 0);
     
     if (!agentIds || agentIds.length === 0) {
       console.log("No agent IDs found for owner:", ownerAddress);

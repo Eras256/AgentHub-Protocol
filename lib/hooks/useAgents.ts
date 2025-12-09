@@ -13,32 +13,60 @@ export function useAgents() {
       if (!address || !sdk) return [];
       
       try {
+        console.log("useAgents - Starting fetch, address:", address, "sdk:", !!sdk);
+        
         const provider = sdk.getProvider();
         if (!provider) {
-          console.warn("No provider available");
+          console.error("useAgents - No provider available from SDK");
           return [];
+        }
+        
+        console.log("useAgents - Provider obtained:", provider);
+        
+        // Verify provider has getNetwork method (ethers provider)
+        if (typeof provider.getNetwork !== 'function') {
+          console.error("useAgents - Provider does not have getNetwork method, provider type:", typeof provider);
+          return [];
+        }
+        
+        // Check network
+        try {
+          const network = await provider.getNetwork();
+          console.log("useAgents - Network:", network);
+          if (network.chainId !== 43113n && network.chainId !== BigInt(43113)) {
+            console.warn("useAgents - Wrong network! Expected 43113 (Avalanche Fuji), got:", network.chainId);
+          }
+        } catch (networkError) {
+          console.error("useAgents - Error getting network:", networkError);
         }
         
         // Normalize address to avoid ENS resolution (Avalanche doesn't support ENS)
         // Helper function to normalize addresses
         const normalizeAddress = (addr: string): string => {
-          if (!addr || !addr.startsWith('0x') || addr.length !== 42) return addr;
+          if (!addr || !addr.startsWith('0x') || addr.length !== 42) {
+            console.warn("useAgents - Invalid address format:", addr);
+            return addr;
+          }
           const ethersAny = ethers as any;
           try {
-            return ethersAny.utils?.getAddress 
+            const normalized = ethersAny.utils?.getAddress 
               ? ethersAny.utils.getAddress(addr)
               : ethersAny.getAddress 
               ? ethersAny.getAddress(addr)
               : addr;
-          } catch {
+            console.log("useAgents - Address normalized:", addr, "->", normalized);
+            return normalized;
+          } catch (normalizeError) {
+            console.warn("useAgents - Address normalization failed, using original:", addr, normalizeError);
             return addr;
           }
         };
         
         const normalizedAddress = normalizeAddress(address);
-        console.log("Fetching agents for address:", normalizedAddress);
+        console.log("useAgents - Fetching agents for normalized address:", normalizedAddress);
         
         // Get all agents owned by this address
+        console.log("useAgents - Calling getAllAgentsByOwner...");
         const agents = await getAllAgentsByOwner(provider, normalizedAddress);
         
         console.log("Raw agents from contract:", agents);
@@ -112,17 +140,23 @@ export function useAgents() {
             };
           });
         
-        console.log("Transformed agents:", transformedAgents);
+        console.log("useAgents - Transformed agents:", transformedAgents);
+        console.log("useAgents - Returning", transformedAgents.length, "agents");
         return transformedAgents;
       } catch (error) {
-        console.error("Error fetching agents:", error);
-        console.error("Error details:", error instanceof Error ? error.message : String(error));
-        return [];
+        console.error("useAgents - Error fetching agents:", error);
+        console.error("useAgents - Error type:", error?.constructor?.name);
+        console.error("useAgents - Error message:", error instanceof Error ? error.message : String(error));
+        console.error("useAgents - Error stack:", error instanceof Error ? error.stack : "No stack");
+        // Re-throw error so React Query can handle it properly
+        throw error;
       }
     },
     enabled: !!address && !!sdk,
     refetchInterval: 30000, // Refetch every 30 seconds
     staleTime: 0, // Always consider data stale to force refetch
+    retry: 2, // Retry failed requests 2 times
+    retryDelay: 1000, // Wait 1 second between retries
   });
 }
 
