@@ -1,11 +1,15 @@
-import { ethers } from "hardhat";
-import fs from "fs";
-import path from "path";
+const { ethers } = require("hardhat");
+const fs = require("fs");
+const path = require("path");
 
 async function main() {
   console.log("🚀 Starting AgentHub deployment on Avalanche Fuji...\n");
 
-  const [deployer] = await ethers.getSigners();
+  const signers = await ethers.getSigners();
+  if (signers.length === 0) {
+    throw new Error("No signers found. Please check your DEPLOYER_PRIVATE_KEY in .env.local");
+  }
+  const [deployer] = signers;
   console.log("📝 Deploying contracts with account:", deployer.address);
   console.log("💰 Account balance:", ethers.formatEther(await ethers.provider.getBalance(deployer.address)), "AVAX\n");
 

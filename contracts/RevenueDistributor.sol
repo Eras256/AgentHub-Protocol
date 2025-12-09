@@ -43,6 +43,7 @@ contract RevenueDistributor is Ownable, ReentrancyGuard {
     );
 
     constructor(address _usdc) Ownable(msg.sender) {
+        require(_usdc != address(0), "Invalid USDC address");
         usdc = IERC20(_usdc);
     }
 
@@ -54,16 +55,28 @@ contract RevenueDistributor is Ownable, ReentrancyGuard {
         uint256 _totalRevenue
     ) external onlyOwner nonReentrant {
         require(_totalRevenue > 0, "Invalid revenue amount");
+        require(_agentCreator != address(0), "Invalid creator address");
+        
+        // Check contract has enough balance
+        uint256 contractBalance = usdc.balanceOf(address(this));
+        require(contractBalance >= _totalRevenue, "Insufficient contract balance");
 
         uint256 creatorAmount = (_totalRevenue * defaultShares.creatorShare) / 10000;
         uint256 stakersAmount = (_totalRevenue * defaultShares.stakersShare) / 10000;
         uint256 protocolAmount = _totalRevenue - creatorAmount - stakersAmount;
 
+        // Ensure amounts add up correctly (handle rounding)
+        require(
+            creatorAmount + stakersAmount + protocolAmount == _totalRevenue,
+            "Distribution mismatch"
+        );
+
         pendingCreatorRevenue[_agentCreator] += creatorAmount;
         pendingStakerRevenue[_agentCreator] += stakersAmount;
 
         // Protocol fee goes to contract owner
-        usdc.transfer(owner(), protocolAmount);
+        bool success = usdc.transfer(owner(), protocolAmount);
+        require(success, "Protocol fee transfer failed");
 
         emit RevenueDistributed(
             _agentCreator,
@@ -81,11 +94,49 @@ contract RevenueDistributor is Ownable, ReentrancyGuard {
         uint256 pending = pendingCreatorRevenue[msg.sender];
         require(pending > 0, "No pending revenue");
 
+        // Check contract has enough balance
+        uint256 contractBalance = usdc.balanceOf(address(this));
+        require(contractBalance >= pending, "Insufficient contract balance");
+
         pendingCreatorRevenue[msg.sender] = 0;
 
-        usdc.transfer(msg.sender, pending);
+        bool success = usdc.transfer(msg.sender, pending);
+        require(success, "Transfer failed");
 
         emit RevenueClaimed(msg.sender, pending, true);
+    }
+
+    /**
+     * @dev Claim pending staker revenue for a specific agent
+     */
+    function claimStakerRevenue(address _agent) external nonReentrant {
+        uint256 pending = pendingStakerRevenue[_agent];
+        require(pending > 0, "No pending staker revenue");
+
+        // Check contract has enough balance
+        uint256 contractBalance = usdc.balanceOf(address(this));
+        require(contractBalance >= pending, "Insufficient contract balance");
+
+        pendingStakerRevenue[_agent] = 0;
+
+        bool success = usdc.transfer(msg.sender, pending);
+        require(success, "Transfer failed");
+
+        emit RevenueClaimed(msg.sender, pending, false);
+    }
+
+    /**
+     * @dev Get total pending revenue for a creator
+     */
+    function getPendingCreatorRevenue(address _creator) external view returns (uint256) {
+        return pendingCreatorRevenue[_creator];
+    }
+
+    /**
+     * @dev Get total pending staker revenue for an agent
+     */
+    function getPendingStakerRevenue(address _agent) external view returns (uint256) {
+        return pendingStakerRevenue[_agent];
     }
 
     /**

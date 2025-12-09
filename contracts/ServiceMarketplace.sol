@@ -64,6 +64,7 @@ contract ServiceMarketplace is Ownable, ReentrancyGuard {
     );
 
     constructor(address _usdc) Ownable(msg.sender) {
+        require(_usdc != address(0), "Invalid USDC address");
         usdc = IERC20(_usdc);
     }
 
@@ -76,14 +77,19 @@ contract ServiceMarketplace is Ownable, ReentrancyGuard {
         string calldata _endpointURL,
         uint256 _pricePerRequest
     ) external returns (bytes32) {
+        require(bytes(_name).length > 0, "Name required");
+        require(bytes(_description).length > 0, "Description required");
+        require(bytes(_endpointURL).length > 0, "Endpoint URL required");
+        require(_pricePerRequest > 0, "Price must be positive");
+
         bytes32 serviceId = keccak256(abi.encodePacked(
             msg.sender,
             _name,
-            block.timestamp
+            block.timestamp,
+            block.prevrandao
         ));
 
         require(services[serviceId].provider == address(0), "Service already exists");
-        require(_pricePerRequest > 0, "Price must be positive");
 
         services[serviceId] = Service({
             serviceId: serviceId,
@@ -116,18 +122,28 @@ contract ServiceMarketplace is Ownable, ReentrancyGuard {
     ) external nonReentrant returns (bytes32) {
         Service storage service = services[_serviceId];
         require(service.isActive, "Service not active");
+        require(service.provider != address(0), "Service does not exist");
+        require(service.provider != msg.sender, "Cannot request own service");
 
         bytes32 requestId = keccak256(abi.encodePacked(
             _serviceId,
             msg.sender,
-            block.timestamp
+            block.timestamp,
+            block.prevrandao
         ));
 
+        require(requests[requestId].consumer == address(0), "Request already exists");
+
+        // Check allowance and balance
+        uint256 allowance = usdc.allowance(msg.sender, address(this));
+        require(allowance >= service.pricePerRequest, "Insufficient allowance");
+        
+        uint256 balance = usdc.balanceOf(msg.sender);
+        require(balance >= service.pricePerRequest, "Insufficient balance");
+
         // Transfer USDC payment
-        require(
-            usdc.transferFrom(msg.sender, service.provider, service.pricePerRequest),
-            "Payment failed"
-        );
+        bool success = usdc.transferFrom(msg.sender, service.provider, service.pricePerRequest);
+        require(success, "Payment failed");
 
         requests[requestId] = ServiceRequest({
             requestId: requestId,
@@ -192,6 +208,64 @@ contract ServiceMarketplace is Ownable, ReentrancyGuard {
             provServices[i] = services[serviceIds[i]];
         }
         return provServices;
+    }
+
+    /**
+     * @dev Get consumer requests
+     */
+    function getConsumerRequests(address _consumer) external view returns (ServiceRequest[] memory) {
+        bytes32[] memory requestIds = consumerRequests[_consumer];
+        ServiceRequest[] memory consumerReqs = new ServiceRequest[](requestIds.length);
+        for (uint256 i = 0; i < requestIds.length; i++) {
+            consumerReqs[i] = requests[requestIds[i]];
+        }
+        return consumerReqs;
+    }
+
+    /**
+     * @dev Deactivate a service (only provider)
+     */
+    function deactivateService(bytes32 _serviceId) external {
+        Service storage service = services[_serviceId];
+        require(service.provider == msg.sender, "Not service provider");
+        require(service.isActive, "Service already inactive");
+        service.isActive = false;
+    }
+
+    /**
+     * @dev Reactivate a service (only provider)
+     */
+    function reactivateService(bytes32 _serviceId) external {
+        Service storage service = services[_serviceId];
+        require(service.provider == msg.sender, "Not service provider");
+        require(!service.isActive, "Service already active");
+        service.isActive = true;
+    }
+
+    /**
+     * @dev Update service price (only provider)
+     */
+    function updateServicePrice(bytes32 _serviceId, uint256 _newPrice) external {
+        Service storage service = services[_serviceId];
+        require(service.provider == msg.sender, "Not service provider");
+        require(_newPrice > 0, "Price must be positive");
+        service.pricePerRequest = _newPrice;
+    }
+
+    /**
+     * @dev Get service by ID
+     */
+    function getService(bytes32 _serviceId) external view returns (Service memory) {
+        require(services[_serviceId].provider != address(0), "Service does not exist");
+        return services[_serviceId];
+    }
+
+    /**
+     * @dev Get request by ID
+     */
+    function getRequest(bytes32 _requestId) external view returns (ServiceRequest memory) {
+        require(requests[_requestId].consumer != address(0), "Request does not exist");
+        return requests[_requestId];
     }
 }
 
