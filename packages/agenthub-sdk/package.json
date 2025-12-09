@@ -1,5 +1,5 @@
 {
-  "name": "@agenthub/sdk",
+  "name": "@vaiosx44/agenthub-sdk",
   "version": "1.0.0",
   "description": "Official TypeScript SDK for AgentHub Protocol - Build autonomous AI agents on Avalanche",
   "main": "dist/index.js",
