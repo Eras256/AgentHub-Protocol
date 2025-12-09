@@ -41,8 +41,12 @@ const AGENT_REGISTRY_ABI = [
   "event ReputationUpdated(address indexed agentAddress, uint256 newTrustScore, bool successful, uint256 transactionValue)",
 ] as const;
 
-const AGENT_REGISTRY_ADDRESS =
-  process.env.NEXT_PUBLIC_AGENT_REGISTRY_ADDRESS || "";
+// Default AgentRegistry address for Avalanche Fuji Testnet
+const DEFAULT_AGENT_REGISTRY_ADDRESS = "0x6750Ed798186b4B5a7441D0f46Dd36F372441306";
+
+const AGENT_REGISTRY_ADDRESS = (
+  process.env.NEXT_PUBLIC_AGENT_REGISTRY_ADDRESS || DEFAULT_AGENT_REGISTRY_ADDRESS
+).trim();
 
 // Helper function to hash agent ID (compatible with both ethers v5 and v6)
 // Frontend uses ethers v5 (for thirdweb v4), so we use ethers.utils.id()
@@ -101,9 +105,26 @@ export async function getAgentRegistryContract(
 ) {
   // Ensure address is a valid hex address (not ENS name) to avoid ENS resolution errors on Avalanche
   // Avalanche Fuji doesn't support ENS, so we must use hex addresses directly
-  const address = AGENT_REGISTRY_ADDRESS;
-  if (!address || !address.startsWith('0x') || address.length !== 42) {
-    throw new Error(`Invalid AgentRegistry address: ${address}`);
+  let address = AGENT_REGISTRY_ADDRESS.trim();
+  
+  // Validate address format
+  if (!address) {
+    throw new Error('AgentRegistry address is not configured. Please set NEXT_PUBLIC_AGENT_REGISTRY_ADDRESS environment variable.');
+  }
+  
+  if (!address.startsWith('0x')) {
+    throw new Error(`Invalid AgentRegistry address format: ${address} (must start with 0x)`);
+  }
+  
+  // Remove any whitespace and validate length
+  address = address.replace(/\s/g, '');
+  if (address.length !== 42) {
+    throw new Error(`Invalid AgentRegistry address length: ${address} (expected 42 characters, got ${address.length})`);
+  }
+  
+  // Validate hex format
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
+    throw new Error(`Invalid AgentRegistry address format: ${address} (must be valid hex address)`);
   }
   
   // Normalize address to avoid ENS resolution
