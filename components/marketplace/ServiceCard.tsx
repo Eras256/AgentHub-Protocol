@@ -45,23 +45,23 @@ export default function ServiceCard({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
+      <div className="flex items-start justify-between mb-3 gap-2">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-2">
-            <h3 className="text-lg font-bold">{service.name}</h3>
+            <h3 className="text-base sm:text-lg font-bold truncate">{service.name}</h3>
             {service.verified && (
-              <CheckCircle className="w-4 h-4 text-cyan-400" />
+              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-400 flex-shrink-0" />
             )}
           </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-400">
-            <span>{service.providerName}</span>
+          <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-400 flex-wrap">
+            <span className="truncate">{service.providerName}</span>
             <span>•</span>
-            <span className="font-mono text-xs">{service.provider}</span>
+            <span className="font-mono text-xs truncate">{service.provider}</span>
           </div>
         </div>
 
         {featured && (
-          <div className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-semibold">
+          <div className="px-1.5 sm:px-2 py-0.5 sm:py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-semibold flex-shrink-0 whitespace-nowrap">
             FEATURED
           </div>
         )}
@@ -78,31 +78,39 @@ export default function ServiceCard({
       <p className="text-sm text-gray-400 mb-4 flex-grow">{service.description}</p>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="text-center p-2 bg-white/5 rounded-lg">
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+        <div className="text-center p-1.5 sm:p-2 bg-white/5 rounded-lg">
           <div className="flex items-center justify-center space-x-1">
-            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-            <span className="text-sm font-bold">{service.rating}</span>
-          </div>
-          <div className="text-xs text-gray-400 mt-1">({service.ratingCount})</div>
-        </div>
-
-        <div className="text-center p-2 bg-white/5 rounded-lg">
-          <div className="flex items-center justify-center">
-            <DollarSign className="w-4 h-4 text-cyan-400" />
-            <span className="text-sm font-bold">{service.pricePerRequest}</span>
-          </div>
-          <div className="text-xs text-gray-400 mt-1">per call</div>
-        </div>
-
-        <div className="text-center p-2 bg-white/5 rounded-lg">
-          <div className="flex items-center justify-center">
-            <Activity className="w-4 h-4 text-purple-400" />
-            <span className="text-sm font-bold">
-              {(service.totalRequests / 1000).toFixed(1)}k
+            <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-yellow-400" />
+            <span className="text-xs sm:text-sm font-bold">
+              {service.ratingCount > 0 ? service.rating.toFixed(1) : "N/A"}
             </span>
           </div>
-          <div className="text-xs text-gray-400 mt-1">requests</div>
+          <div className="text-xs text-gray-400 mt-0.5 sm:mt-1">
+            ({service.ratingCount} {service.ratingCount === 1 ? 'rating' : 'ratings'})
+          </div>
+        </div>
+
+        <div className="text-center p-1.5 sm:p-2 bg-white/5 rounded-lg">
+          <div className="flex items-center justify-center">
+            <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-cyan-400" />
+            <span className="text-xs sm:text-sm font-bold truncate ml-0.5">
+              {parseFloat(service.pricePerRequest.toString()).toFixed(6)} USDC
+            </span>
+          </div>
+          <div className="text-xs text-gray-400 mt-0.5 sm:mt-1">per request</div>
+        </div>
+
+        <div className="text-center p-1.5 sm:p-2 bg-white/5 rounded-lg">
+          <div className="flex items-center justify-center">
+            <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400" />
+            <span className="text-xs sm:text-sm font-bold">
+              {service.totalRequests >= 1000 
+                ? `${(service.totalRequests / 1000).toFixed(1)}k`
+                : service.totalRequests}
+            </span>
+          </div>
+          <div className="text-xs text-gray-400 mt-0.5 sm:mt-1">requests</div>
         </div>
       </div>
 
@@ -110,13 +118,20 @@ export default function ServiceCard({
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        className="w-full py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-lg font-medium text-sm flex items-center justify-center space-x-2 group"
+        className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center space-x-2 group disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
         tabIndex={0}
         aria-label={`Request ${service.name}`}
+        onClick={() => {
+          // This will be handled by parent component
+          if (typeof window !== 'undefined') {
+            const event = new CustomEvent('request-service', { detail: { serviceId: service.id } });
+            window.dispatchEvent(event);
+          }
+        }}
       >
         <span>Request Service</span>
         <ExternalLink
-          className={`w-4 h-4 transition-transform ${
+          className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${
             isHovered ? "translate-x-1" : ""
           }`}
         />
