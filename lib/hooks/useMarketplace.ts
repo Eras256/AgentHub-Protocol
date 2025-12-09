@@ -3,6 +3,30 @@ import { useSDK, useAddress } from "@thirdweb-dev/react";
 import { getAllServices, publishService, requestService } from "@/lib/contracts/marketplace";
 import { ethers } from "ethers";
 
+// Helper function to create public RPC provider (avoids Thirdweb RPC auth issues)
+function createPublicRpcProvider() {
+  const rpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
+  const ethersAny = ethers as any;
+  
+  // Use ethers v5 API (providers.JsonRpcProvider)
+  if (ethersAny.providers && ethersAny.providers.JsonRpcProvider) {
+    return new ethersAny.providers.JsonRpcProvider(rpcUrl, {
+      name: 'avalanche-fuji',
+      chainId: 43113,
+      ensAddress: null, // Disable ENS resolution for Avalanche
+    });
+  } else if (ethersAny.JsonRpcProvider) {
+    // Fallback for ethers v6 style
+    return new ethersAny.JsonRpcProvider(rpcUrl, {
+      name: 'avalanche-fuji',
+      chainId: 43113,
+      ensAddress: null, // Disable ENS resolution for Avalanche
+    });
+  }
+  
+  throw new Error("Cannot create provider: ethers.providers.JsonRpcProvider not available");
+}
+
 export function useMarketplaceServices() {
   const sdk = useSDK();
 
@@ -179,17 +203,16 @@ export function useRequestService() {
 }
 
 export function useConsumerRequests() {
-  const sdk = useSDK();
   const address = useAddress();
 
   return useQuery({
     queryKey: ["consumer-requests", address],
     queryFn: async () => {
-      if (!sdk || !address) return [];
+      if (!address) return [];
       
       try {
-        const provider = sdk.getProvider();
-        if (!provider) return [];
+        // Always use public RPC to avoid Thirdweb RPC authentication issues
+        const provider = createPublicRpcProvider();
         
         const contract = await import("@/lib/contracts/marketplace").then(m => 
           m.getMarketplaceContract(provider)
@@ -212,7 +235,7 @@ export function useConsumerRequests() {
         return [];
       }
     },
-    enabled: !!sdk && !!address,
+    enabled: !!address,
   });
 }
 

@@ -8,18 +8,41 @@ import {
 } from "@/lib/contracts/revenueDistributor";
 import { ethers } from "ethers";
 
+// Helper function to create public RPC provider (avoids Thirdweb RPC auth issues)
+function createPublicRpcProvider() {
+  const rpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
+  const ethersAny = ethers as any;
+  
+  // Use ethers v5 API (providers.JsonRpcProvider)
+  if (ethersAny.providers && ethersAny.providers.JsonRpcProvider) {
+    return new ethersAny.providers.JsonRpcProvider(rpcUrl, {
+      name: 'avalanche-fuji',
+      chainId: 43113,
+      ensAddress: null, // Disable ENS resolution for Avalanche
+    });
+  } else if (ethersAny.JsonRpcProvider) {
+    // Fallback for ethers v6 style
+    return new ethersAny.JsonRpcProvider(rpcUrl, {
+      name: 'avalanche-fuji',
+      chainId: 43113,
+      ensAddress: null, // Disable ENS resolution for Avalanche
+    });
+  }
+  
+  throw new Error("Cannot create provider: ethers.providers.JsonRpcProvider not available");
+}
+
 export function usePendingRevenue() {
   const address = useAddress();
-  const sdk = useSDK();
 
   return useQuery({
     queryKey: ["pending-revenue", address],
     queryFn: async () => {
-      if (!address || !sdk) return { creator: "0", staker: "0" };
+      if (!address) return { creator: "0", staker: "0" };
 
       try {
-        const provider = sdk.getProvider();
-        if (!provider) return { creator: "0", staker: "0" };
+        // Always use public RPC to avoid Thirdweb RPC authentication issues
+        const provider = createPublicRpcProvider();
 
         const creatorPending = await getPendingCreatorRevenue(provider, address);
         // For staker revenue, we'd need to check all agents, but for simplicity, return creator
@@ -35,7 +58,7 @@ export function usePendingRevenue() {
         return { creator: "0", staker: "0" };
       }
     },
-    enabled: !!address && !!sdk,
+    enabled: !!address,
     refetchInterval: 30000,
   });
 }

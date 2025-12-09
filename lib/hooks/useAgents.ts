@@ -3,6 +3,30 @@ import { useAddress, useSDK } from "@thirdweb-dev/react";
 import { getAllAgentsByOwner, registerAgent, addStake, getMinStake } from "@/lib/contracts/agentRegistry";
 import { ethers } from "ethers";
 
+// Helper function to create public RPC provider (avoids Thirdweb RPC auth issues)
+function createPublicRpcProvider() {
+  const rpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
+  const ethersAny = ethers as any;
+  
+  // Use ethers v5 API (providers.JsonRpcProvider)
+  if (ethersAny.providers && ethersAny.providers.JsonRpcProvider) {
+    return new ethersAny.providers.JsonRpcProvider(rpcUrl, {
+      name: 'avalanche-fuji',
+      chainId: 43113,
+      ensAddress: null, // Disable ENS resolution for Avalanche
+    });
+  } else if (ethersAny.JsonRpcProvider) {
+    // Fallback for ethers v6 style
+    return new ethersAny.JsonRpcProvider(rpcUrl, {
+      name: 'avalanche-fuji',
+      chainId: 43113,
+      ensAddress: null, // Disable ENS resolution for Avalanche
+    });
+  }
+  
+  throw new Error("Cannot create provider: ethers.providers.JsonRpcProvider not available");
+}
+
 export function useAgents() {
   const address = useAddress();
   const sdk = useSDK();
@@ -202,11 +226,11 @@ export function useAgent(agentId?: string) {
   return useQuery({
     queryKey: ["agent", agentId],
     queryFn: async () => {
-      if (!agentId || !sdk) return null;
+      if (!agentId) return null;
       
       try {
-        const provider = sdk.getProvider();
-        if (!provider) return null;
+        // Always use public RPC to avoid Thirdweb RPC authentication issues
+        const provider = createPublicRpcProvider();
         
         const { getAgent } = await import("@/lib/contracts/agentRegistry");
         const agentProfile = await getAgent(provider, agentId);
@@ -231,7 +255,7 @@ export function useAgent(agentId?: string) {
         return null;
       }
     },
-    enabled: !!agentId && !!sdk,
+    enabled: !!agentId,
   });
 }
 
@@ -286,16 +310,12 @@ export function useAddStake() {
 }
 
 export function useMinStake() {
-  const sdk = useSDK();
-
   return useQuery({
     queryKey: ["minStake"],
     queryFn: async () => {
-      if (!sdk) return "0.01"; // Fallback if SDK not available
-      
       try {
-        const provider = sdk.getProvider();
-        if (!provider) return "0.01"; // Fallback if provider not available
+        // Always use public RPC to avoid Thirdweb RPC authentication issues
+        const provider = createPublicRpcProvider();
         
         const minStake = await getMinStake(provider);
         return minStake;
@@ -304,7 +324,6 @@ export function useMinStake() {
         return "0.01"; // Fallback on error
       }
     },
-    enabled: !!sdk,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes (minStake rarely changes)
     refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
   });
