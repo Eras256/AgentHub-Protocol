@@ -28,8 +28,6 @@ function createPublicRpcProvider() {
 }
 
 export function useMarketplaceServices() {
-  const sdk = useSDK();
-
   return useQuery({
     queryKey: ["marketplace-services"],
     queryFn: async () => {
@@ -37,38 +35,10 @@ export function useMarketplaceServices() {
       if (typeof window === "undefined") {
         return [];
       }
-
-      if (!sdk) {
-        console.warn("SDK not available");
-        return [];
-      }
       
       try {
-        // Try to get provider from SDK
-        let provider = null;
-        try {
-          provider = sdk.getProvider();
-        } catch (e) {
-          console.warn("Could not get provider from SDK, using fallback");
-        }
-        
-        // Fallback: Create provider directly from RPC URL
-        if (!provider) {
-          const rpcUrl = "https://api.avax-test.network/ext/bc/C/rpc";
-          // Use ethers v5 API (providers.JsonRpcProvider)
-          // Type assertion needed because TypeScript sees ethers v6 types, but runtime uses v5
-          const ethersAny = ethers as any;
-          // Check if providers exists, otherwise try direct JsonRpcProvider
-          if (ethersAny.providers && ethersAny.providers.JsonRpcProvider) {
-            provider = new ethersAny.providers.JsonRpcProvider(rpcUrl);
-          } else if (ethersAny.JsonRpcProvider) {
-            // Fallback for ethers v6 style
-            provider = new ethersAny.JsonRpcProvider(rpcUrl);
-          } else {
-            console.error("Cannot create provider: ethers.providers.JsonRpcProvider not available");
-            return [];
-          }
-        }
+        // Always use public RPC to avoid Thirdweb RPC authentication issues
+        const provider = createPublicRpcProvider();
         
         console.log("Fetching services from marketplace contract...");
         const services = await getAllServices(provider);
@@ -143,7 +113,7 @@ export function useMarketplaceServices() {
         return [];
       }
     },
-    enabled: !!sdk && typeof window !== "undefined",
+    enabled: typeof window !== "undefined",
     refetchInterval: 30000, // Refetch every 30 seconds
     retry: 2, // Retry twice on failure
     staleTime: 0, // Always consider data stale to force refetch

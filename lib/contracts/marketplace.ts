@@ -1,9 +1,32 @@
 import { ethers } from "ethers";
 
+// Helper function to normalize addresses and avoid ENS resolution
+// Avalanche networks don't support ENS, so we must use hex addresses directly
+function normalizeAddress(address: string): string {
+  if (!address || !address.startsWith('0x') || address.length !== 42) {
+    return address; // Return as-is if not a valid hex address
+  }
+  
+  const ethersAny = ethers as any;
+  try {
+    // Normalize address format (checksum)
+    return ethersAny.utils?.getAddress 
+      ? ethersAny.utils.getAddress(address)
+      : ethersAny.getAddress 
+      ? ethersAny.getAddress(address)
+      : address;
+  } catch (error) {
+    // If normalization fails, return original address
+    console.warn('Address normalization failed, using original:', address);
+    return address;
+  }
+}
+
 // Use environment variable or fallback to deployed contract address
-const MARKETPLACE_ADDRESS =
+const MARKETPLACE_ADDRESS = (
   process.env.NEXT_PUBLIC_SERVICE_MARKETPLACE_ADDRESS || 
-  "0xe51BF692F7ce26999f8D18d799f73Ad250BfeEC4"; // Default deployed address on Fuji
+  "0xe51BF692F7ce26999f8D18d799f73Ad250BfeEC4" // Default deployed address on Fuji
+).trim();
 
 // ServiceMarketplace ABI (extracted from contract)
 const SERVICE_MARKETPLACE_ABI = [
@@ -26,8 +49,24 @@ export async function getMarketplaceContract(
     throw new Error("NEXT_PUBLIC_SERVICE_MARKETPLACE_ADDRESS is not set");
   }
   
+  // Validate and normalize address to avoid ENS resolution
+  let address = MARKETPLACE_ADDRESS.trim();
+  if (!address.startsWith('0x') || address.length !== 42) {
+    throw new Error(`Invalid Marketplace address format: ${address}`);
+  }
+  
+  // Remove any whitespace and validate hex format
+  address = address.replace(/\s/g, '');
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
+    throw new Error(`Invalid Marketplace address format: ${address} (must be valid hex address)`);
+  }
+  
+  // Normalize address to avoid ENS resolution
+  const normalizedAddress = normalizeAddress(address);
+  
+  // Create contract with normalized address (no ENS resolution)
   return new ethers.Contract(
-    MARKETPLACE_ADDRESS,
+    normalizedAddress,
     SERVICE_MARKETPLACE_ABI,
     signerOrProvider
   );
@@ -99,8 +138,11 @@ export async function getConsumerRequests(
   signerOrProvider: ethers.Signer | ethers.Provider,
   consumerAddress: string
 ) {
+  // Normalize address to avoid ENS resolution (Avalanche doesn't support ENS)
+  const normalizedConsumerAddress = normalizeAddress(consumerAddress);
+  
   const contract = await getMarketplaceContract(signerOrProvider);
-  return contract.getConsumerRequests(consumerAddress);
+  return contract.getConsumerRequests(normalizedConsumerAddress);
 }
 
 export async function completeServiceRequest(
