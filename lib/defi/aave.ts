@@ -97,7 +97,9 @@ export async function getAavePool(
   poolAddressesProvider: string,
   network: "avalanche-fuji" | "avalanche-mainnet" = "avalanche-fuji"
 ): Promise<ethers.Contract> {
-  const provider = signerOrProvider instanceof ethers.Signer ? signerOrProvider.provider! : signerOrProvider;
+  // Check if it's a signer by checking for getAddress method (ethers v6 compatible)
+  const isSigner = signerOrProvider && typeof signerOrProvider.getAddress === 'function';
+  const provider = isSigner && signerOrProvider.provider ? signerOrProvider.provider : signerOrProvider;
   const addressesProvider = new ethers.Contract(poolAddressesProvider, AAVE_PROVIDER_ABI, provider);
   const poolAddress = await addressesProvider.getPool();
   return new ethers.Contract(poolAddress, AAVE_POOL_ABI, signerOrProvider);
@@ -120,7 +122,7 @@ export function getAaveProviderAddress(
  * Supply assets to Aave
  */
 export async function supplyToAave(
-  signer: ethers.Signer,
+  signer: any, // ethers.Signer
   params: SupplyParams,
   poolAddressesProvider: string,
   network: "avalanche-fuji" | "avalanche-mainnet" = "avalanche-fuji"
@@ -182,7 +184,7 @@ export async function supplyToAave(
  * Borrow from Aave
  */
 export async function borrowFromAave(
-  signer: ethers.Signer,
+  signer: any, // ethers.Signer
   params: BorrowParams,
   poolAddressesProvider: string,
   network: "avalanche-fuji" | "avalanche-mainnet" = "avalanche-fuji"
@@ -212,7 +214,7 @@ export async function borrowFromAave(
  * Repay borrow to Aave
  */
 export async function repayToAave(
-  signer: ethers.Signer,
+  signer: any, // ethers.Signer
   params: RepayParams,
   poolAddressesProvider: string,
   network: "avalanche-fuji" | "avalanche-mainnet" = "avalanche-fuji"
@@ -288,7 +290,7 @@ export async function repayToAave(
  * Withdraw from Aave
  */
 export async function withdrawFromAave(
-  signer: ethers.Signer,
+  signer: any, // ethers.Signer
   params: WithdrawParams,
   poolAddressesProvider: string,
   network: "avalanche-fuji" | "avalanche-mainnet" = "avalanche-fuji"

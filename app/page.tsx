@@ -256,7 +256,7 @@ export default function HomePage() {
               </span>
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-400 max-w-3xl mx-auto px-4">
-              Get started in 4 simple steps. From registration to autonomous operations, we've made it easy.
+              Get started in 4 simple steps. From registration to autonomous operations, we&apos;ve made it easy.
             </p>
           </motion.div>
           

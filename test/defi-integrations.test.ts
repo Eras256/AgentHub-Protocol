@@ -13,8 +13,10 @@
  * - Protocol contract addresses configured
  */
 
+// @ts-ignore - chai v4 expect API
 import { expect } from "chai";
 import hre from "hardhat";
+// @ts-ignore - Hardhat ethers plugin
 const { ethers } = hre;
 
 describe("DeFi Protocol Integrations - Fuji Testnet", function () {

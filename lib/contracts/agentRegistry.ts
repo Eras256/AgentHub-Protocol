@@ -1,6 +1,23 @@
 import { ethers } from "ethers";
-// @ts-ignore - Artifacts are generated during contract compilation
-import AgentRegistryABI from "../../artifacts/contracts/AgentRegistry.sol/AgentRegistry.json";
+
+// AgentRegistry ABI (hardcoded to avoid dependency on artifacts during build)
+const AGENT_REGISTRY_ABI = [
+  "function registerAgent(bytes32 _agentId, string _metadataIPFS) external payable",
+  "function registerAgentWithPoAI(bytes32 _agentId, string _metadataIPFS, bytes32 _kitePoAIHash) external payable",
+  "function getAgent(bytes32 _agentId) external view returns (tuple(bytes32 agentId, address owner, string metadataIPFS, uint256 trustScore, uint256 totalTransactions, uint256 successfulTransactions, uint256 stakedAmount, bool isActive, uint256 createdAt, bytes32 kitePoAIHash))",
+  "function getAgentByAddress(address _owner) external view returns (tuple(bytes32 agentId, address owner, string metadataIPFS, uint256 trustScore, uint256 totalTransactions, uint256 successfulTransactions, uint256 stakedAmount, bool isActive, uint256 createdAt, bytes32 kitePoAIHash))",
+  "function getAllAgentsByOwner(address _owner) external view returns (bytes32[])",
+  "function addStake(bytes32 _agentId) external payable",
+  "function withdrawStake(bytes32 _agentId, uint256 _amount) external",
+  "function minStake() external view returns (uint256)",
+  "function isAgentRegistered(bytes32 _agentId) external view returns (bool)",
+  "function totalAgents() external view returns (uint256)",
+  "function updateReputation(bytes32 _agentId, bool _successful, uint256 _transactionValue, string _serviceType) external",
+  "event AgentRegistered(address indexed agentAddress, bytes32 indexed agentId, string metadataIPFS, uint256 timestamp)",
+  "event AgentStaked(address indexed agentAddress, uint256 amount, uint256 newTotalStake)",
+  "event AgentUnstaked(address indexed agentAddress, uint256 amount, uint256 remainingStake)",
+  "event ReputationUpdated(address indexed agentAddress, uint256 newTrustScore, bool successful, uint256 transactionValue)",
+] as const;
 
 const AGENT_REGISTRY_ADDRESS =
   process.env.NEXT_PUBLIC_AGENT_REGISTRY_ADDRESS || "";
@@ -62,7 +79,7 @@ export async function getAgentRegistryContract(
 ) {
   return new ethers.Contract(
     AGENT_REGISTRY_ADDRESS,
-    AgentRegistryABI.abi,
+    AGENT_REGISTRY_ABI,
     signerOrProvider
   );
 }

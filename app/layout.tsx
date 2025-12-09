@@ -8,6 +8,8 @@ import { ClientProviders } from "@/components/providers/ClientProviders";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "AgentHub Protocol | Autonomous AI on Avalanche",
   description:

@@ -10,7 +10,7 @@
 [![Avalanche](https://img.shields.io/badge/Avalanche-Fuji-E84142?style=for-the-badge&logo=avalanche)](https://www.avax.network/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-**The first complete infrastructure on Avalanche where AI agents can pay, operate, and build reputation autonomously using the x402 protocol.**
+**AgentHub Protocol is a complete infrastructure on Avalanche for autonomous AI agents. It enables autonomous micropayments (x402), on-chain reputation building (ERC-8004), a decentralized service marketplace with USDC payments, hybrid AI decision-making (Google Gemini + Kite Chain PoAI), production-ready DeFi integrations (Trader Joe, Benqi, Aave), and complete SDKs for TypeScript, C++, and Python.**
 
 [🚀 Features](#-features) • [📖 Story](#-the-story) • [🛠️ Tech Stack](#️-tech-stack) • [⚡ Quick Start](#-quick-start) • [📚 Documentation](#-documentation) • [🤝 Contributing](#-contributing)
 
@@ -24,7 +24,7 @@ Imagine a world where AI agents don't just execute commands—they **think**, **
 
 **That world is here.**
 
-AgentHub Protocol is the first complete infrastructure on Avalanche that enables AI agents to operate as truly autonomous economic entities. Built on the revolutionary [x402 payment protocol](https://github.com/federiconardelli7/x402-starter-kit), our platform allows AI agents to:
+AgentHub Protocol is a complete infrastructure on Avalanche that enables AI agents to operate as truly autonomous economic entities. Built on the revolutionary [x402 payment protocol](https://github.com/federiconardelli7/x402-starter-kit), our platform provides a full-stack solution with smart contracts, TypeScript SDK, IoT SDKs, and production-ready DeFi integrations. Our platform allows AI agents to:
 
 - 💰 **Pay autonomously** using micropayments without human intervention
 - 🏆 **Build reputation** through verifiable on-chain identity (ERC-8004)
@@ -133,7 +133,7 @@ Whether you're building a DeFi trading bot, a smart contract auditor, or an IoT 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/vaiosx01/AgentHub-Protocol.git
+git clone https://github.com/Eras256/AgentHub-Protocol.git
 cd AgentHub-Protocol
 
 # 2. Install dependencies
@@ -486,6 +486,11 @@ NEXT_PUBLIC_AAVE_PROVIDER_ADDRESS=your_aave_provider_address
 - **[lib/ai/README.md](lib/ai/README.md)** - AI integration guide
 - **[lib/agents/README.md](lib/agents/README.md)** - Agent development guide
 
+### TypeScript SDK Documentation
+
+- **[packages/agenthub-sdk/README.md](packages/agenthub-sdk/README.md)** - TypeScript SDK for Node.js and browsers
+- **[packages/agenthub-sdk/PUBLISH.md](packages/agenthub-sdk/PUBLISH.md)** - Guía de publicación en npm
+
 ### IoT SDK Documentation
 
 - **[packages/agenthub-iot-cpp/README.md](packages/agenthub-iot-cpp/README.md)** - C++ SDK for ESP32/Arduino
@@ -761,6 +766,71 @@ AgentHub Protocol leverages Google Gemini AI for its autonomous agents. Here's w
 - Real-time decision making for autonomous agents
 - Cost-effective high-volume operations
 - Multimodal analysis (text, images, video)
+
+---
+
+## 📦 TypeScript SDK
+
+El SDK oficial de AgentHub Protocol está disponible en npm para uso en proyectos Node.js y navegadores.
+
+### Instalación
+
+```bash
+npm install @agenthub/sdk
+# o
+pnpm add @agenthub/sdk
+# o
+yarn add @agenthub/sdk
+```
+
+### Uso Rápido
+
+```typescript
+import { AgentHubSDK } from '@agenthub/sdk';
+
+// Inicializar SDK
+const sdk = new AgentHubSDK({
+  network: 'avalanche-fuji',
+  privateKey: process.env.PRIVATE_KEY,
+});
+
+// Registrar un agente
+const tx = await sdk.agents.register({
+  agentId: 'my-agent-001',
+  metadataIPFS: 'ipfs://Qm...',
+  stakeAmount: '0.01', // AVAX (mínimo 0.01 AVAX)
+});
+
+// Publicar un servicio
+const serviceTx = await sdk.marketplace.publishService({
+  name: 'My AI Service',
+  description: 'Description of service',
+  endpointURL: 'https://api.example.com',
+  pricePerRequest: '0.01', // USDC
+});
+
+// Realizar pago x402
+const payment = await sdk.x402.pay({
+  amount: '0.01',
+  token: 'USDC',
+  tier: 'premium',
+});
+```
+
+### Características
+
+- ✅ Operaciones de Agent Registry (ERC-8004)
+- ✅ Operaciones de Marketplace
+- ✅ Protocolo de pago x402
+- ✅ Distribución de ingresos
+- ✅ API TypeScript-first
+- ✅ Herramientas CLI incluidas
+
+### Publicación Automática
+
+El SDK se publica automáticamente en npm cuando se crea un release en GitHub. Ver [packages/agenthub-sdk/PUBLISH.md](packages/agenthub-sdk/PUBLISH.md) para más detalles.
+
+**Paquete npm:** [@agenthub/sdk](https://www.npmjs.com/package/@agenthub/sdk)
 
 ---
 

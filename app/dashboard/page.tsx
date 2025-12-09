@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAddress } from "@thirdweb-dev/react";
@@ -329,7 +331,7 @@ export default function DashboardPage() {
                   {agentsError instanceof Error ? agentsError.message : "Unknown error"}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Make sure you're connected to Avalanche Fuji testnet
+                  Make sure you&apos;re connected to Avalanche Fuji testnet
                 </p>
               </GlassCard>
             ) : myAgents.length === 0 ? (

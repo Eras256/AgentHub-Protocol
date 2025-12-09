@@ -151,7 +151,7 @@ export default function Footer() {
             </p>
             <p className="text-gray-500 text-xs sm:text-sm">
               Made by{" "}
-              <span className="text-purple-400 font-semibold">Vaiosx & M0nssx</span>
+              <span className="text-purple-400 font-semibold">Vaiosx & M0nsxx</span>
             </p>
           </div>
           <div className="flex flex-wrap justify-center sm:justify-end gap-3 sm:gap-6 text-xs sm:text-sm">

@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "AgentHub Protocol", email = "info@agenthub.protocol"}
+    {name = "Eras256", email = "contact@agenthub.protocol"}
 ]
 keywords = ["agenthub", "iot", "avalanche", "blockchain", "x402", "raspberry-pi"]
 classifiers = [

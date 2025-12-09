@@ -156,10 +156,10 @@ export default function AgentDetailsPage() {
             <Bot className="w-12 h-12 mx-auto mb-4 text-red-400" />
             <p className="text-xl text-red-400 mb-2">Agent Not Found</p>
             <p className="text-sm text-gray-400 mb-4">
-              {agentError instanceof Error ? agentError.message : "The agent you're looking for doesn't exist or you don't have permission to view it."}
+              {agentError instanceof Error ? agentError.message : "The agent you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it."}
             </p>
             <p className="text-xs text-gray-500">
-              Make sure you're connected to Avalanche Fuji testnet and the agent ID is correct.
+              Make sure you&apos;re connected to Avalanche Fuji testnet and the agent ID is correct.
             </p>
           </GlassCard>
         </div>

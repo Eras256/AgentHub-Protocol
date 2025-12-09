@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAddress, useSDK } from "@thirdweb-dev/react";
@@ -106,7 +108,7 @@ export default function PublishServicePage() {
                 <div className="flex-1">
                   <h3 className="font-semibold mb-2 text-white">Associate with Agent (Optional)</h3>
                   <p className="text-xs text-gray-300 mb-3">
-                    Select an agent from the list or enter the agent ID manually. The endpoint URL should point to where this agent's service is running.
+                    Select an agent from the list or enter the agent ID manually. The endpoint URL should point to where this agent&apos;s service is running.
                   </p>
                   
                   {/* Manual ID Input */}
@@ -177,7 +179,7 @@ export default function PublishServicePage() {
                 <div className="flex-1">
                   <h3 className="font-semibold mb-1 text-yellow-400">No Agents Found</h3>
                   <p className="text-xs text-gray-400 mb-3">
-                    You don't have any registered agents yet. You can enter an agent ID manually or create a new agent.
+                    You don&apos;t have any registered agents yet. You can enter an agent ID manually or create a new agent.
                   </p>
                   
                   {/* Manual ID Input when no agents */}
@@ -252,7 +254,7 @@ export default function PublishServicePage() {
               <div className="mt-2 p-3 bg-cyan-600/10 border border-cyan-500/20 rounded-lg">
                 <p className="text-xs text-gray-300 mb-2 font-semibold">What is an Endpoint URL?</p>
                 <p className="text-xs text-gray-400 mb-2">
-                  This is the API endpoint URL where your agent's service is running. When someone requests your service, they will call this endpoint to interact with your agent.
+                  This is the API endpoint URL where your agent&apos;s service is running. When someone requests your service, they will call this endpoint to interact with your agent.
                 </p>
                 {selectedAgentId ? (
                   <div className="text-xs text-gray-300 mb-2 p-2 bg-cyan-600/20 rounded">

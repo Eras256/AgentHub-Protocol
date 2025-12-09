@@ -438,12 +438,12 @@ Could you provide more details, or choose a quick action below?`;
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 p-3 sm:p-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-full shadow-[0_0_50px_rgba(168,85,247,0.5)] hover:shadow-[0_0_80px_rgba(168,85,247,0.8)] transition-all touch-manipulation"
+            className="fixed bottom-2 right-2 sm:bottom-3 sm:right-3 z-50 p-2 sm:p-2.5 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-full shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_40px_rgba(168,85,247,0.5)] transition-all touch-manipulation"
             aria-label="Open AI chatbot"
             tabIndex={0}
           >
-            <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+            <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+            <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse" />
           </motion.button>
         )}
       </AnimatePresence>
@@ -455,34 +455,34 @@ Could you provide more details, or choose a quick action below?`;
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[400px] h-[calc(100vh-8rem)] sm:h-[600px] max-w-[calc(100vw-2rem)] sm:max-w-[400px] max-h-[calc(100vh-2rem)] sm:max-h-[600px]"
+            className="fixed bottom-2 right-2 sm:bottom-3 sm:right-3 z-50 w-[calc(100vw-1rem)] sm:w-[280px] md:w-[320px] h-[calc(100vh-5rem)] sm:h-[400px] md:h-[450px] max-w-[calc(100vw-1rem)] sm:max-w-[280px] md:max-w-[320px] max-h-[calc(100vh-1rem)] sm:max-h-[400px] md:max-h-[450px]"
           >
             <GlassCard glow="purple" className="h-full flex flex-col p-0 overflow-hidden">
               {/* Header */}
-              <div className="p-4 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-purple-600/20 to-cyan-600/20 relative">
-                  <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="p-2 sm:p-2.5 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-purple-600/20 to-cyan-600/20 relative">
+                  <div className="flex items-center space-x-1.5">
                     <div className="relative">
-                      <Bot className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400" />
-                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-black" />
+                      <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+                      <div className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 bg-green-500 rounded-full border border-black" />
                     </div>
                     <div>
-                      <div className="font-bold text-sm sm:text-base">AgentHub AI</div>
-                      <div className="text-xs text-gray-400">Always here to help</div>
+                      <div className="font-bold text-[11px] sm:text-xs">AgentHub AI</div>
+                      <div className="text-[9px] sm:text-[10px] text-gray-400">Always here to help</div>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="absolute top-2 right-2 p-1.5 sm:p-2 hover:bg-white/20 rounded-lg transition-colors text-gray-400 hover:text-white touch-manipulation"
+                    className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 p-0.5 sm:p-1 hover:bg-white/20 rounded transition-colors text-gray-400 hover:text-white touch-manipulation"
                     aria-label="Close chatbot"
                     tabIndex={0}
                   >
-                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <X className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </button>
               </div>
 
               {/* Messages */}
               <div 
-                className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" 
+                className="flex-1 overflow-y-auto p-2 sm:p-2.5 space-y-2 sm:space-y-2.5 min-h-0" 
                 style={{ 
                   scrollbarWidth: 'thin',
                   scrollbarColor: 'rgba(168, 85, 247, 0.5) transparent'
@@ -498,38 +498,38 @@ Could you provide more details, or choose a quick action below?`;
                     }`}
                   >
                     <div
-                      className={`flex items-start space-x-2 max-w-[85%] ${
+                      className={`flex items-start space-x-1.5 max-w-[92%] sm:max-w-[88%] ${
                         message.role === "user"
                           ? "flex-row-reverse space-x-reverse"
                           : ""
                       }`}
                     >
                       <div
-                        className={`p-2 rounded-full ${
+                        className={`p-1 sm:p-1.5 rounded-full flex-shrink-0 ${
                           message.role === "user"
                             ? "bg-cyan-600/20"
                             : "bg-purple-600/20"
                         }`}
                       >
                         {message.role === "user" ? (
-                          <User className="w-4 h-4 text-cyan-400" />
+                          <User className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400" />
                         ) : (
-                          <Bot className="w-4 h-4 text-purple-400" />
+                          <Bot className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400" />
                         )}
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <div
-                          className={`p-3 rounded-lg ${
+                          className={`p-1.5 sm:p-2 rounded-lg ${
                             message.role === "user"
                               ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white"
                               : "bg-white/10"
                           }`}
                         >
-                          <p className="text-sm whitespace-pre-line">
+                          <p className="text-[11px] sm:text-xs whitespace-pre-line break-words leading-relaxed">
                             {message.content}
                           </p>
                         </div>
-                        <div className="text-xs text-gray-500 mt-1 px-1">
+                        <div className="text-[9px] sm:text-[10px] text-gray-500 mt-0.5 px-0.5">
                           {message.timestamp.toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -546,13 +546,13 @@ Could you provide more details, or choose a quick action below?`;
                     animate={{ opacity: 1 }}
                     className="flex justify-start"
                   >
-                    <div className="flex items-center space-x-2">
-                      <div className="p-2 rounded-full bg-purple-600/20">
-                        <Bot className="w-4 h-4 text-purple-400" />
+                    <div className="flex items-center space-x-1.5">
+                      <div className="p-1 sm:p-1.5 rounded-full bg-purple-600/20">
+                        <Bot className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400" />
                       </div>
-                      <div className="p-3 rounded-lg bg-white/10 flex items-center space-x-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
-                        <span className="text-sm text-gray-400">Thinking...</span>
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-white/10 flex items-center space-x-1.5">
+                        <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin text-purple-400" />
+                        <span className="text-[11px] sm:text-xs text-gray-400">Thinking...</span>
                       </div>
                     </div>
                   </motion.div>
@@ -563,19 +563,19 @@ Could you provide more details, or choose a quick action below?`;
 
               {/* Quick Actions */}
               {messages.length <= 2 && (
-                <div className="px-4 pb-2">
-                  <div className="flex items-center space-x-1 mb-2">
-                    <Sparkles className="w-4 h-4 text-yellow-400" />
-                    <span className="text-xs text-gray-400">Quick actions:</span>
+                <div className="px-2 sm:px-2.5 pb-1 sm:pb-1.5">
+                  <div className="flex items-center space-x-1 mb-1 sm:mb-1.5">
+                    <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-400" />
+                    <span className="text-[9px] sm:text-[10px] text-gray-400">Quick actions:</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1 sm:gap-1.5">
                     {quickActions.map((action, index) => (
                       <motion.button
                         key={index}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleQuickAction(action.prompt)}
-                        className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-left transition-colors touch-manipulation"
+                        className="p-1 sm:p-1.5 bg-white/5 hover:bg-white/10 rounded text-[9px] sm:text-[10px] text-left transition-colors touch-manipulation break-words leading-tight"
                         tabIndex={0}
                         aria-label={action.label}
                       >
@@ -587,8 +587,8 @@ Could you provide more details, or choose a quick action below?`;
               )}
 
               {/* Input */}
-              <div className="p-3 sm:p-4 border-t border-white/10">
-                <div className="flex items-center space-x-2">
+              <div className="p-2 sm:p-2.5 border-t border-white/10">
+                <div className="flex items-center space-x-1.5">
                   <input
                     type="text"
                     value={input}
@@ -596,7 +596,7 @@ Could you provide more details, or choose a quick action below?`;
                     onKeyPress={(e) => e.key === "Enter" && handleSend()}
                     placeholder="Ask me anything..."
                     disabled={isLoading}
-                    className="flex-1 px-3 sm:px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-purple-500 text-sm disabled:opacity-50"
+                    className="flex-1 px-2 sm:px-2.5 py-1 sm:py-1.5 bg-white/5 border border-white/10 rounded focus:outline-none focus:border-purple-500 text-[11px] sm:text-xs disabled:opacity-50"
                     tabIndex={0}
                     aria-label="Chat input"
                   />
@@ -605,11 +605,11 @@ Could you provide more details, or choose a quick action below?`;
                     whileTap={{ scale: 0.95 }}
                     onClick={handleSend}
                     disabled={!input.trim() || isLoading}
-                    className="p-2 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                    className="p-1 sm:p-1.5 bg-gradient-to-r from-purple-600 to-cyan-600 rounded disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation flex-shrink-0"
                     aria-label="Send message"
                     tabIndex={0}
                   >
-                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <Send className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </motion.button>
                 </div>
               </div>

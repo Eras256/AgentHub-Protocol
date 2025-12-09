@@ -148,7 +148,8 @@ export async function executeSwap(
       const amounts = await router.getAmountsOut(params.amountIn, path);
       const expectedOut = amounts[amounts.length - 1];
       const slippage = params.slippageTolerance || 300; // 3% default
-      amountOutMin = (expectedOut * BigInt(10000 - slippage)) / BigInt(10000);
+      const amountOutMinBigInt = (expectedOut * BigInt(10000 - slippage)) / BigInt(10000);
+      amountOutMin = amountOutMinBigInt.toString();
     }
     
     let tx: ethers.ContractTransactionResponse;

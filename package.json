@@ -2,6 +2,10 @@
   "name": "agenthub-protocol",
   "version": "1.0.0",
   "private": true,
+  "author": {
+    "name": "Eras256",
+    "email": "contact@agenthub.protocol"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -16,7 +20,7 @@
     "deploy:fuji": "powershell -Command \"$envContent = Get-Content .env.local -Raw; if ($envContent -match 'DEPLOYER_PRIVATE_KEY[=\\s]+([^\\r\\n#]+)') { $env:DEPLOYER_PRIVATE_KEY = $matches[1].Trim(); npx hardhat run scripts/deploy.js --network fuji } else { Write-Host 'DEPLOYER_PRIVATE_KEY not found in .env.local'; exit 1 }\"",
     "verify:fuji": "hardhat verify --network fuji",
     "e2e:fuji": "powershell -Command \"$envContent = Get-Content .env.local -Raw; if ($envContent -match 'DEPLOYER_PRIVATE_KEY[=\\s]+([^\\r\\n#]+)') { $env:DEPLOYER_PRIVATE_KEY = $matches[1].Trim(); npx hardhat run scripts/e2e-transactions.js --network fuji } else { Write-Host 'DEPLOYER_PRIVATE_KEY not found in .env.local'; exit 1 }\"",
-    "postinstall": "node scripts/patch-ethers.js && node scripts/patch-pnpm-ethers.js"
+    "postinstall": "node scripts/patch-ethers.js && node scripts/patch-pnpm-ethers.js || true"
   },
   "dependencies": {
     "@google/generative-ai": "^0.2.1",

@@ -2,7 +2,7 @@
  * x402 Payment Commands
  */
 
-import { initiateX402Payment } from "../../src/x402/payments";
+import { initiateX402Payment } from "../index-export";
 
 export async function x402PayCommand(options: {
   amount: string;

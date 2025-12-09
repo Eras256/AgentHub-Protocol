@@ -2,7 +2,7 @@
  * Register Agent Command
  */
 
-import { AgentHubSDK } from "../../src/client";
+import { AgentHubSDK } from "../index-export";
 
 export async function registerAgentCommand(options: {
   agentId: string;

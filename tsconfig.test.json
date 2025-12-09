@@ -1,0 +1,31 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "@jest/globals"],
+    "module": "commonjs",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "baseUrl": ".",
+    "resolveJsonModule": true
+  },
+  "include": [
+    "test/**/*.ts",
+    "lib/**/*.ts",
+    "app/**/*.ts",
+    "components/**/*.ts",
+    "next-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "scripts",
+    "hardhat.config.ts",
+    "contracts",
+    ".next"
+  ]
+}
+

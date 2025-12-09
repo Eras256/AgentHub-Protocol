@@ -2,7 +2,7 @@
  * Marketplace Commands
  */
 
-import { AgentHubSDK } from "../../src/client";
+import { AgentHubSDK } from "../index-export";
 
 export async function publishServiceCommand(options: {
   name: string;

@@ -1,0 +1,58 @@
+# Development files
+.env.local
+.env.development.local
+.env.test.local
+
+# Hardhat files (not needed for frontend deployment)
+hardhat.config.*
+# Exclude only root contracts/ directory (Solidity files), NOT lib/contracts/ (TypeScript files needed for frontend)
+/contracts/
+scripts/
+test/
+# Keep artifacts needed by lib/contracts/ but exclude cache
+artifacts/contracts/
+!artifacts/contracts/AgentRegistry.sol/
+!artifacts/contracts/RevenueDistributor.sol/
+cache/
+typechain-types/
+deployments/
+
+# SDK packages (monorepo packages)
+packages/
+
+# Documentation
+*.md
+!README.md
+
+# Keep scripts for postinstall
+!scripts/
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts (Vercel will build these)
+.next/
+out/
+dist/
+build/
+
+# Testing
+coverage/
+.nyc_output/
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# CI/CD
+.github/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+
