@@ -14,6 +14,28 @@ import ServiceCard from "@/components/marketplace/ServiceCard";
 import { ethers } from "ethers";
 import { useEffect } from "react";
 
+// Helper function to normalize addresses and avoid ENS resolution
+// Avalanche networks don't support ENS, so we must use hex addresses directly
+function normalizeAddress(address: string): string {
+  if (!address || !address.startsWith('0x') || address.length !== 42) {
+    return address; // Return as-is if not a valid hex address
+  }
+  
+  const ethersAny = ethers as any;
+  try {
+    // Normalize address format (checksum)
+    return ethersAny.utils?.getAddress 
+      ? ethersAny.utils.getAddress(address)
+      : ethersAny.getAddress 
+      ? ethersAny.getAddress(address)
+      : address;
+  } catch (error) {
+    // If normalization fails, return original address
+    console.warn('Address normalization failed, using original:', address);
+    return address;
+  }
+}
+
 export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
