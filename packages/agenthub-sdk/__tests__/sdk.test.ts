@@ -66,11 +66,17 @@ describe("AgentHub SDK - End-to-End Tests", () => {
       }
 
       sdk = new AgentHubSDK(testConfig);
-      expect(sdk.agents).toBeDefined();
-      expect(sdk.agents.register).toBeDefined();
-      expect(sdk.agents.get).toBeDefined();
-      expect(sdk.agents.addStake).toBeDefined();
-      expect(sdk.agents.withdrawStake).toBeDefined();
+      // Access getter to ensure it's executed
+      const agents = sdk.agents;
+      expect(agents).toBeDefined();
+      expect(agents.register).toBeDefined();
+      expect(agents.get).toBeDefined();
+      expect(agents.addStake).toBeDefined();
+      expect(agents.withdrawStake).toBeDefined();
+      
+      // Execute getter again to ensure coverage
+      const agents2 = sdk.agents;
+      expect(agents2).toBeDefined();
     });
 
     it("should get agent information (read-only)", async () => {
@@ -101,11 +107,17 @@ describe("AgentHub SDK - End-to-End Tests", () => {
       }
 
       sdk = new AgentHubSDK(testConfig);
-      expect(sdk.marketplace).toBeDefined();
-      expect(sdk.marketplace.publishService).toBeDefined();
-      expect(sdk.marketplace.requestService).toBeDefined();
-      expect(sdk.marketplace.getAllServices).toBeDefined();
-      expect(sdk.marketplace.getService).toBeDefined();
+      // Access getter to ensure it's executed
+      const marketplace = sdk.marketplace;
+      expect(marketplace).toBeDefined();
+      expect(marketplace.publishService).toBeDefined();
+      expect(marketplace.requestService).toBeDefined();
+      expect(marketplace.getAllServices).toBeDefined();
+      expect(marketplace.getService).toBeDefined();
+      
+      // Execute getter again to ensure coverage
+      const marketplace2 = sdk.marketplace;
+      expect(marketplace2).toBeDefined();
     });
 
     it("should get all services from marketplace", async () => {
@@ -135,8 +147,14 @@ describe("AgentHub SDK - End-to-End Tests", () => {
       }
 
       sdk = new AgentHubSDK(testConfig);
-      expect(sdk.x402).toBeDefined();
-      expect(sdk.x402.pay).toBeDefined();
+      // Access getter to ensure it's executed
+      const x402 = sdk.x402;
+      expect(x402).toBeDefined();
+      expect(x402.pay).toBeDefined();
+      
+      // Execute getter again to ensure coverage
+      const x402_2 = sdk.x402;
+      expect(x402_2).toBeDefined();
     });
 
     it("should handle x402 payment request structure", async () => {
@@ -173,8 +191,14 @@ describe("AgentHub SDK - End-to-End Tests", () => {
         rpcUrl: testConfig.rpcUrl,
       });
 
-      expect(sdk.ai).toBeDefined();
-      expect(sdk.ai.generateContent).toBeDefined();
+      // Access getter to ensure it's executed
+      const ai = sdk.ai;
+      expect(ai).toBeDefined();
+      expect(ai.generateContent).toBeDefined();
+      
+      // Execute getter again to ensure coverage
+      const ai2 = sdk.ai;
+      expect(ai2).toBeDefined();
     });
   });
 

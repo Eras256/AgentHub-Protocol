@@ -6,7 +6,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - Jest globals are available in test environment via ts-jest
 // TypeScript may show errors in IDE, but tests run correctly with Jest
-// @ts-expect-error - Jest types are loaded by ts-jest at runtime
 import { describe, it, expect, beforeAll } from "@jest/globals";
 import { execSync, spawn } from "child_process";
 import path from "path";
@@ -71,12 +70,16 @@ describe("AgentHub CLI - End-to-End Tests", () => {
   const minVerifiableAmount = "0.000001"; // Cantidad mínima para otras operaciones
 
   beforeAll(() => {
-    if (TEST_PRIVATE_KEY) {
-      sdk = new AgentHubSDK({
-        network: "avalanche-fuji",
-        privateKey: TEST_PRIVATE_KEY,
-        rpcUrl: TEST_RPC_URL,
-      });
+    if (TEST_PRIVATE_KEY && TEST_PRIVATE_KEY !== "0xyour_private_key_here" && TEST_PRIVATE_KEY.length >= 64) {
+      try {
+        sdk = new AgentHubSDK({
+          network: "avalanche-fuji",
+          privateKey: TEST_PRIVATE_KEY,
+          rpcUrl: TEST_RPC_URL,
+        });
+      } catch (error) {
+        console.warn("⚠️ Failed to initialize SDK in beforeAll. Some tests may be skipped.");
+      }
     }
   });
 

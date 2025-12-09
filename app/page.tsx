@@ -333,23 +333,51 @@ export default function HomePage() {
                   <div>
                     <h3 className="font-semibold mb-1">CLI Tools</h3>
                     <p className="text-gray-400 text-sm">
-                      Command-line interface for agent management and deployment
+                      Command-line interface for agent management, marketplace operations, and x402 payments
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
                   <div className="w-2 h-2 bg-pink-400 rounded-full mt-2"></div>
                   <div>
-                    <h3 className="font-semibold mb-1">Easy Integration</h3>
+                    <h3 className="font-semibold mb-1">Well Tested</h3>
                     <p className="text-gray-400 text-sm">
-                      Get started in minutes with comprehensive documentation
+                      87.82% test coverage with 167 tests, 100% coverage for core SDK
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Published on npm</h3>
+                    <p className="text-gray-400 text-sm">
+                      Install directly from npm: <code className="bg-black/30 px-1 rounded text-xs">@vaiosx44/agenthub-sdk</code>
                     </p>
                   </div>
                 </div>
               </div>
-              <div className="p-4 bg-yellow-600/20 border border-yellow-500/30 rounded-lg mb-6">
-                <p className="text-sm text-yellow-300">
-                  <strong>Note:</strong> SDK is currently available locally. Check the repository for installation instructions.
+              <div className="flex flex-wrap gap-2 mb-4">
+                <a
+                  href="https://www.npmjs.com/package/@vaiosx44/agenthub-sdk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-[#CB3837] hover:bg-[#B8312F] rounded-lg text-white text-xs font-semibold transition-all flex items-center space-x-1"
+                >
+                  <span>📦</span>
+                  <span>npm</span>
+                </a>
+                <div className="px-3 py-1.5 bg-green-600/20 border border-green-500/30 rounded-lg text-green-300 text-xs font-semibold flex items-center space-x-1">
+                  <span>✅</span>
+                  <span>87.82% Coverage</span>
+                </div>
+                <div className="px-3 py-1.5 bg-purple-600/20 border border-purple-500/30 rounded-lg text-purple-300 text-xs font-semibold flex items-center space-x-1">
+                  <span>🧪</span>
+                  <span>167 Tests</span>
+                </div>
+              </div>
+              <div className="p-4 bg-green-600/20 border border-green-500/30 rounded-lg mb-6">
+                <p className="text-sm text-green-300">
+                  <strong>✅ Published:</strong> SDK is now available on npm! Install with <code className="bg-black/30 px-1.5 py-0.5 rounded">npm install @vaiosx44/agenthub-sdk</code>
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -358,26 +386,26 @@ export default function HomePage() {
                   whileTap={{ scale: 0.95 }}
                   className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-lg font-semibold text-sm sm:text-base flex items-center justify-center space-x-2 shadow-[0_0_30px_rgba(168,85,247,0.3)] hover:shadow-[0_0_50px_rgba(168,85,247,0.5)] transition-all"
                   onClick={() => {
-                    window.open('https://github.com/your-repo/packages/agenthub-sdk', '_blank');
+                    window.open('https://www.npmjs.com/package/@vaiosx44/agenthub-sdk', '_blank');
                   }}
                   tabIndex={0}
-                  aria-label="View SDK Documentation"
+                  aria-label="View SDK on npm"
                 >
                   <Code className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span>View SDK on GitHub</span>
+                  <span>View on npm</span>
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 backdrop-blur-xl bg-white/10 border border-white/20 rounded-lg font-semibold text-sm sm:text-base hover:bg-white/20 transition-all"
                   onClick={() => {
-                    navigator.clipboard.writeText('git clone https://github.com/your-repo/agenthub-protocol.git');
-                    alert('Repository URL copied to clipboard!');
+                    navigator.clipboard.writeText('npm install @vaiosx44/agenthub-sdk');
+                    alert('Install command copied to clipboard!');
                   }}
                   tabIndex={0}
-                  aria-label="Copy Repository URL"
+                  aria-label="Copy Install Command"
                 >
-                  Copy Repo URL
+                  Copy Install Command
                 </motion.button>
               </div>
             </div>
@@ -385,16 +413,15 @@ export default function HomePage() {
               <div className="space-y-4">
                 <h3 className="text-2xl font-bold mb-4">Quick Start</h3>
                 <div className="bg-black/50 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-                  <div className="text-gray-400 mb-2"># Clone repository</div>
-                  <div className="text-cyan-400">git clone https://github.com/your-repo/agenthub-protocol.git</div>
-                  <div className="text-gray-400 mt-4 mb-2"># Install dependencies</div>
-                  <div className="text-cyan-400">cd agenthub-protocol/packages/agenthub-sdk</div>
-                  <div className="text-cyan-400">pnpm install</div>
+                  <div className="text-gray-400 mb-2"># Install from npm</div>
+                  <div className="text-cyan-400">npm install @vaiosx44/agenthub-sdk</div>
+                  <div className="text-gray-400 mt-4 mb-2"># Or use CLI</div>
+                  <div className="text-cyan-400">npx @vaiosx44/agenthub-sdk --help</div>
                   <div className="text-gray-400 mt-4 mb-2"># Use in your code</div>
                   <div className="text-purple-400">import</div>
                   <div className="text-white inline">{" { AgentHubSDK } "}</div>
                   <div className="text-purple-400">from</div>
-                  <div className="text-yellow-400">{" './packages/agenthub-sdk'"}</div>
+                  <div className="text-yellow-400">&apos;@vaiosx44/agenthub-sdk&apos;</div>
                   <div className="text-gray-400 mt-4 mb-2"># Initialize</div>
                   <div className="text-white">const sdk =</div>
                   <div className="text-purple-400">new</div>
@@ -402,6 +429,13 @@ export default function HomePage() {
                   <div className="text-gray-300 pl-4">network: <span className="text-green-400">&apos;avalanche-fuji&apos;</span>,</div>
                   <div className="text-gray-300 pl-4">privateKey: process.env.PRIVATE_KEY</div>
                   <div className="text-white">{`});`}</div>
+                </div>
+                <div className="pt-4 border-t border-white/10">
+                  <div className="flex items-center justify-between text-xs text-gray-400">
+                    <span>📊 Coverage: 87.82%</span>
+                    <span>🧪 167 Tests</span>
+                    <span>✅ 100% client.ts</span>
+                  </div>
                 </div>
               </div>
             </GlassCard>

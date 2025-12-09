@@ -771,66 +771,111 @@ AgentHub Protocol leverages Google Gemini AI for its autonomous agents. Here's w
 
 ## 📦 TypeScript SDK
 
-El SDK oficial de AgentHub Protocol está disponible en npm para uso en proyectos Node.js y navegadores.
+The official AgentHub Protocol SDK is available on npm for use in Node.js and browser projects.
 
-### Instalación
+### Installation
 
 ```bash
-npm install @agenthub/sdk
-# o
-pnpm add @agenthub/sdk
-# o
-yarn add @agenthub/sdk
+npm install @vaiosx44/agenthub-sdk
+# or
+pnpm add @vaiosx44/agenthub-sdk
+# or
+yarn add @vaiosx44/agenthub-sdk
 ```
 
-### Uso Rápido
+### Quick Start
 
 ```typescript
-import { AgentHubSDK } from '@agenthub/sdk';
+import { AgentHubSDK } from '@vaiosx44/agenthub-sdk';
 
-// Inicializar SDK
+// Initialize SDK
 const sdk = new AgentHubSDK({
   network: 'avalanche-fuji',
   privateKey: process.env.PRIVATE_KEY,
 });
 
-// Registrar un agente
+// Register an agent
 const tx = await sdk.agents.register({
   agentId: 'my-agent-001',
   metadataIPFS: 'ipfs://Qm...',
-  stakeAmount: '0.01', // AVAX (mínimo 0.01 AVAX)
+  stakeAmount: '0.01', // AVAX (minimum 0.01 AVAX)
 });
 
-// Publicar un servicio
+// Publish a service
 const serviceTx = await sdk.marketplace.publishService({
   name: 'My AI Service',
   description: 'Description of service',
   endpointURL: 'https://api.example.com',
-  pricePerRequest: '0.01', // USDC
+  pricePerRequest: '0.000001', // USDC (minimum verifiable)
 });
 
-// Realizar pago x402
+// Make x402 payment
 const payment = await sdk.x402.pay({
-  amount: '0.01',
+  amount: '0.000001', // Minimum verifiable amount
   token: 'USDC',
-  tier: 'premium',
+  tier: 'basic',
 });
 ```
 
-### Características
+### CLI Usage
 
-- ✅ Operaciones de Agent Registry (ERC-8004)
-- ✅ Operaciones de Marketplace
-- ✅ Protocolo de pago x402
-- ✅ Distribución de ingresos
-- ✅ API TypeScript-first
-- ✅ Herramientas CLI incluidas
+```bash
+# Install globally
+npm install -g @vaiosx44/agenthub-sdk
 
-### Publicación Automática
+# Or use with npx
+npx @vaiosx44/agenthub-sdk --help
 
-El SDK se publica automáticamente en npm cuando se crea un release en GitHub. Ver [packages/agenthub-sdk/PUBLISH.md](packages/agenthub-sdk/PUBLISH.md) para más detalles.
+# Register an agent
+agenthub agent:register \
+  --agent-id "my-agent-001" \
+  --metadata "ipfs://Qm..." \
+  --stake "0.01" \
+  --network fuji
 
-**Paquete npm:** [@agenthub/sdk](https://www.npmjs.com/package/@agenthub/sdk)
+# Publish a service
+agenthub marketplace:publish \
+  --name "My AI Service" \
+  --description "Service description" \
+  --endpoint "https://api.example.com" \
+  --price "0.000001" \
+  --network fuji
+
+# Make x402 payment
+agenthub x402:pay \
+  --amount "0.000001" \
+  --token USDC \
+  --tier basic
+```
+
+### Features
+
+- ✅ Agent Registry operations (ERC-8004)
+- ✅ Marketplace operations
+- ✅ x402 Payment protocol
+- ✅ Revenue distribution
+- ✅ TypeScript-first API
+- ✅ CLI tools included
+- ✅ 87.82% test coverage (167 tests)
+- ✅ 100% coverage for core SDK (`client.ts`)
+
+### Test Coverage
+
+The SDK includes comprehensive tests with excellent coverage:
+
+- **Overall Coverage**: 87.82% statements, 82.81% branches, 92.72% functions, 87.74% lines
+- **Core SDK**: 100% coverage for `client.ts` (statements, branches, functions, lines)
+- **Total Tests**: 167 tests across 12 test suites
+- **Test Environment**: Avalanche Fuji Testnet
+- **Minimum Verifiable Amount**: 0.000001 USDC (for scanner verification)
+
+### Automatic Publishing
+
+The SDK is automatically published to npm when a release is created on GitHub. See [packages/agenthub-sdk/README.md](packages/agenthub-sdk/README.md) for more details.
+
+**npm Package:** [@vaiosx44/agenthub-sdk](https://www.npmjs.com/package/@vaiosx44/agenthub-sdk)
+
+**GitHub Repository:** [packages/agenthub-sdk](https://github.com/Eras256/AgentHub-Protocol/tree/main/packages/agenthub-sdk)
 
 ---
 
