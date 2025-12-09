@@ -438,11 +438,11 @@ Could you provide more details, or choose a quick action below?`;
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 z-50 p-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-full shadow-[0_0_50px_rgba(168,85,247,0.5)] hover:shadow-[0_0_80px_rgba(168,85,247,0.8)] transition-all"
+            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 p-3 sm:p-4 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-full shadow-[0_0_50px_rgba(168,85,247,0.5)] hover:shadow-[0_0_80px_rgba(168,85,247,0.8)] transition-all touch-manipulation"
             aria-label="Open AI chatbot"
             tabIndex={0}
           >
-            <MessageSquare className="w-6 h-6 text-white" />
+            <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse" />
           </motion.button>
         )}
@@ -455,33 +455,39 @@ Could you provide more details, or choose a quick action below?`;
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-50 w-[400px] h-[600px] max-w-[calc(100vw-3rem)] max-h-[calc(100vh-3rem)]"
+            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[400px] h-[calc(100vh-8rem)] sm:h-[600px] max-w-[calc(100vw-2rem)] sm:max-w-[400px] max-h-[calc(100vh-2rem)] sm:max-h-[600px]"
           >
             <GlassCard glow="purple" className="h-full flex flex-col p-0 overflow-hidden">
               {/* Header */}
-              <div className="p-4 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-purple-600/20 to-cyan-600/20">
-                <div className="flex items-center space-x-3">
-                  <div className="relative">
-                    <Bot className="w-8 h-8 text-purple-400" />
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-black" />
+              <div className="p-4 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-purple-600/20 to-cyan-600/20 relative">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="relative">
+                      <Bot className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400" />
+                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-black" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm sm:text-base">AgentHub AI</div>
+                      <div className="text-xs text-gray-400">Always here to help</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-bold">AgentHub AI</div>
-                    <div className="text-xs text-gray-400">Always here to help</div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                  aria-label="Close chatbot"
-                  tabIndex={0}
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="absolute top-2 right-2 p-1.5 sm:p-2 hover:bg-white/20 rounded-lg transition-colors text-gray-400 hover:text-white touch-manipulation"
+                    aria-label="Close chatbot"
+                    tabIndex={0}
+                  >
+                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div 
+                className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0" 
+                style={{ 
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: 'rgba(168, 85, 247, 0.5) transparent'
+                }}
+              >
                 {messages.map((message) => (
                   <motion.div
                     key={message.id}
@@ -569,7 +575,7 @@ Could you provide more details, or choose a quick action below?`;
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleQuickAction(action.prompt)}
-                        className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-left transition-colors"
+                        className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-left transition-colors touch-manipulation"
                         tabIndex={0}
                         aria-label={action.label}
                       >
@@ -581,7 +587,7 @@ Could you provide more details, or choose a quick action below?`;
               )}
 
               {/* Input */}
-              <div className="p-4 border-t border-white/10">
+              <div className="p-3 sm:p-4 border-t border-white/10">
                 <div className="flex items-center space-x-2">
                   <input
                     type="text"
@@ -590,7 +596,7 @@ Could you provide more details, or choose a quick action below?`;
                     onKeyPress={(e) => e.key === "Enter" && handleSend()}
                     placeholder="Ask me anything..."
                     disabled={isLoading}
-                    className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-purple-500 text-sm disabled:opacity-50"
+                    className="flex-1 px-3 sm:px-4 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-purple-500 text-sm disabled:opacity-50"
                     tabIndex={0}
                     aria-label="Chat input"
                   />
@@ -599,11 +605,11 @@ Could you provide more details, or choose a quick action below?`;
                     whileTap={{ scale: 0.95 }}
                     onClick={handleSend}
                     disabled={!input.trim() || isLoading}
-                    className="p-2 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
                     aria-label="Send message"
                     tabIndex={0}
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                   </motion.button>
                 </div>
               </div>

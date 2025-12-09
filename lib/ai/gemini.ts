@@ -3,20 +3,217 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-let genAI: GoogleGenerativeAI | null = null;
-let model: any = null;
+// ============================================
+// ROBUST AI CLIENT WITH FALLBACK STRATEGY
+// ============================================
+// Priority order: Newest/Fastest -> Legacy/Stable
+// Ensures 100% demo uptime even if latest models are unavailable
+
+// Support both GEMINI_API_KEY and GOOGLE_GEMINI_API_KEY for compatibility
+const API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+
+if (!API_KEY) {
+  console.warn("⚠️ GEMINI_API_KEY or GOOGLE_GEMINI_API_KEY not configured. AI features will be limited.");
+}
+
+const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
+
+// Model order according to official documentation
+// Priority: gemini-2.5-flash (confirmed functional)
+// Note: gemini-pro is NOT available in v1beta API
+const MODELS = [
+  "gemini-2.5-flash", // ⚡ Primary: Newest, fastest (confirmed functional)
+  "gemini-2.5-pro",   // 🧠 Fallback 1: More capable
+  "gemini-2.0-flash", // 🛡️ Fallback 2: Stable previous version
+  "gemini-1.5-flash", // 📉 Fallback 3: Legacy reliable
+  "gemini-1.5-pro",   // 🎯 Fallback 4: Most capable legacy
+];
+
+export interface AIResponse {
+  content: string;
+  model: string;
+  timestamp: number;
+}
+
+/**
+ * Generate content with automatic fallback across multiple Gemini models
+ * Ensures maximum uptime by trying models in priority order
+ * @param prompt - Text prompt for AI generation
+ * @param imageBase64 - Optional base64 image data (for multimodal)
+ * @returns AIResponse with content, model used, and timestamp
+ */
+/**
+ * Generate content with automatic fallback across multiple Gemini models
+ * Enhanced with JSON extraction and better error handling
+ */
+export async function generateContentWithFallback(
+  prompt: string,
+  imageBase64?: string,
+  options?: {
+    temperature?: number;
+    topP?: number;
+    topK?: number;
+    maxOutputTokens?: number;
+    extractJSON?: boolean;
+  }
+): Promise<AIResponse> {
+  if (!genAI) {
+    throw new Error("GEMINI_API_KEY or GOOGLE_GEMINI_API_KEY environment variable is required");
+  }
+
+  const {
+    temperature = 0.7,
+    topP = 0.9,
+    topK = 40,
+    maxOutputTokens = 1024,
+    extractJSON = false,
+  } = options || {};
+
+  let lastError: any;
+
+  for (const modelName of MODELS) {
+    try {
+      console.log(`🤖 [AI] Attempting generation with model: ${modelName}`);
+
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        generationConfig: {
+          temperature,
+          topP,
+          topK,
+          maxOutputTokens,
+        },
+      });
+
+      const parts: any[] = [{ text: prompt }];
+
+      if (imageBase64) {
+        // Ensure clean base64 string (remove data URL prefix if present)
+        const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
+        parts.push({
+          inlineData: {
+            data: cleanBase64,
+            mimeType: "image/png", // Defaulting to png for simplicity
+          },
+        });
+      }
+
+      const result = await model.generateContent(parts);
+      const responseText = result.response.text();
+
+      if (!responseText || responseText.trim().length === 0) {
+        throw new Error("Empty response from AI");
+      }
+
+      // Extract JSON if requested
+      let finalContent = responseText;
+      if (extractJSON) {
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          finalContent = jsonMatch[0];
+        }
+      }
+
+      console.log(`✅ [AI] Success with ${modelName}`);
+
+      return {
+        content: finalContent,
+        model: modelName, // Metadata for debugging
+        timestamp: Date.now(),
+      };
+    } catch (error: any) {
+      const errorMsg = error.message || String(error);
+      console.warn(`⚠️ [AI] Model ${modelName} failed:`, errorMsg.substring(0, 200));
+      lastError = error;
+
+      // Handle different error types
+      if (errorMsg.includes("429") || error.status === 429) {
+        // Rate limit - wait longer before trying next model
+        const waitTime = 2000; // 2 seconds
+        console.log(`⏳ [AI] Rate limit hit for ${modelName}, waiting ${waitTime}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      } else if (errorMsg.includes("404") || error.status === 404) {
+        // Model not found - skip quickly to next model
+        console.log(`⏭️ [AI] Model ${modelName} not available, trying next...`);
+        // No wait needed for 404
+      } else if (errorMsg.includes("quota") || errorMsg.includes("Quota")) {
+        // Quota exceeded - wait a bit
+        console.log(`⏳ [AI] Quota exceeded for ${modelName}, waiting 1s...`);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
+      // Continue to next model in loop
+    }
+  }
+
+  console.error("❌ [AI] All models failed");
+  throw new Error(
+    `AI Service Unavailable: ${lastError?.message || "Unknown error"}`
+  );
+}
+
+/**
+ * Call Gemini with structured JSON response extraction
+ * Returns parsed JSON data or throws error
+ */
+export async function callGemini(
+  prompt: string,
+  options?: {
+    temperature?: number;
+    topP?: number;
+    topK?: number;
+    maxOutputTokens?: number;
+  }
+): Promise<{ data: any; modelUsed: string }> {
+  const response = await generateContentWithFallback(prompt, undefined, {
+    ...options,
+    extractJSON: true,
+  });
+
+  try {
+    const data = JSON.parse(response.content);
+    return { data, modelUsed: response.model };
+  } catch (error) {
+    // If JSON parsing fails, try to extract JSON from the response
+    const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        const data = JSON.parse(jsonMatch[0]);
+        return { data, modelUsed: response.model };
+      } catch {
+        throw new Error("Failed to parse JSON from AI response");
+      }
+    }
+    throw new Error("No valid JSON found in AI response");
+  }
+}
+
+// ============================================
+// LEGACY FUNCTIONS (Maintained for compatibility)
+// ============================================
+
+let legacyGenAI: GoogleGenerativeAI | null = null;
+let legacyModel: any = null;
 
 export function initializeGemini() {
-  if (!process.env.GOOGLE_GEMINI_API_KEY) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+  
+  if (!apiKey) {
     return null;
   }
 
-  if (!genAI) {
-    genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY);
-    model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  if (!legacyGenAI) {
+    legacyGenAI = new GoogleGenerativeAI(apiKey);
+    // Use gemini-2.5-flash as primary, with fallback
+    try {
+      legacyModel = legacyGenAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    } catch {
+      // Fallback to 1.5-flash if 2.5-flash not available
+      legacyModel = legacyGenAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    }
   }
 
-  return { genAI, model };
+  return { genAI: legacyGenAI, model: legacyModel };
 }
 
 export async function generateGeminiResponse(
@@ -161,26 +358,42 @@ Consider:
 - Gas costs
 - Trust score impact
 
+IMPORTANT: Respond ONLY with valid JSON. No markdown, no explanations outside the JSON.
 Format response as JSON with: strategy, allocations, expectedYield, riskLevel`;
 
-  const prompt = `Optimize the DeFi portfolio strategy.`;
+  const prompt = `Optimize the DeFi portfolio strategy. Return only valid JSON.`;
 
   try {
-    const response = await generateGeminiResponse(prompt, systemInstruction);
+    // Use the new callGemini function for better JSON extraction
+    const { data, modelUsed } = await callGemini(
+      `${systemInstruction}\n\n${prompt}`,
+      { temperature: 0.4, topP: 0.8 }
+    );
     
+    console.log(`✅ [AI] DeFi optimization completed with ${modelUsed}`);
+    
+    // Validate and return
+    return {
+      strategy: data.strategy || "No strategy provided",
+      allocations: data.allocations || {},
+      expectedYield: data.expectedYield || 0,
+      riskLevel: data.riskLevel || "moderate",
+    };
+  } catch (error) {
+    console.error("DeFi optimization error:", error);
+    // Fallback to old method if new one fails
     try {
-      return JSON.parse(response);
+      const response = await generateGeminiResponse(prompt, systemInstruction);
+      const parsed = JSON.parse(response);
+      return parsed;
     } catch {
       return {
-        strategy: response,
+        strategy: "Unable to generate strategy at this time",
         allocations: {},
         expectedYield: 0,
         riskLevel: "moderate",
       };
     }
-  } catch (error) {
-    console.error("DeFi optimization error:", error);
-    throw error;
   }
 }
 

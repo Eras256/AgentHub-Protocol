@@ -193,7 +193,10 @@ Format response as JSON with: decision, reasoning, confidence (0-100), recommend
     marketData?: Record<string, any>
   ): Promise<HybridDecisionResult> {
     // Use makeAgentDecision for advanced analysis
-    const geminiDecision = await makeAgentDecision(agentContext, marketData);
+    const geminiDecision = await makeAgentDecision(
+      { ...agentContext, agentId: this.agentId },
+      marketData
+    );
 
     const decision: Decision = {
       agentId: this.agentId,
