@@ -54,6 +54,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
       
+      - name: Install SDK dependencies
+        working-directory: packages/agenthub-sdk
+        run: pnpm install --no-frozen-lockfile
+      
       - name: Determine version
         id: version
         shell: bash
