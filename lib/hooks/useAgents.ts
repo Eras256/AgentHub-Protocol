@@ -19,10 +19,27 @@ export function useAgents() {
           return [];
         }
         
-        console.log("Fetching agents for address:", address);
+        // Normalize address to avoid ENS resolution (Avalanche doesn't support ENS)
+        // Helper function to normalize addresses
+        const normalizeAddress = (addr: string): string => {
+          if (!addr || !addr.startsWith('0x') || addr.length !== 42) return addr;
+          const ethersAny = ethers as any;
+          try {
+            return ethersAny.utils?.getAddress 
+              ? ethersAny.utils.getAddress(addr)
+              : ethersAny.getAddress 
+              ? ethersAny.getAddress(addr)
+              : addr;
+          } catch {
+            return addr;
+          }
+        };
+        
+        const normalizedAddress = normalizeAddress(address);
+        console.log("Fetching agents for address:", normalizedAddress);
         
         // Get all agents owned by this address
-        const agents = await getAllAgentsByOwner(provider, address);
+        const agents = await getAllAgentsByOwner(provider, normalizedAddress);
         
         console.log("Raw agents from contract:", agents);
         

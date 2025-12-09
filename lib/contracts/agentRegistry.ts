@@ -1,5 +1,27 @@
 import { ethers } from "ethers";
 
+// Helper function to normalize addresses and avoid ENS resolution
+// Avalanche networks don't support ENS, so we must use hex addresses directly
+function normalizeAddress(address: string): string {
+  if (!address || !address.startsWith('0x') || address.length !== 42) {
+    return address; // Return as-is if not a valid hex address
+  }
+  
+  const ethersAny = ethers as any;
+  try {
+    // Normalize address format (checksum)
+    return ethersAny.utils?.getAddress 
+      ? ethersAny.utils.getAddress(address)
+      : ethersAny.getAddress 
+      ? ethersAny.getAddress(address)
+      : address;
+  } catch (error) {
+    // If normalization fails, return original address
+    console.warn('Address normalization failed, using original:', address);
+    return address;
+  }
+}
+
 // AgentRegistry ABI (hardcoded to avoid dependency on artifacts during build)
 const AGENT_REGISTRY_ABI = [
   "function registerAgent(bytes32 _agentId, string _metadataIPFS) external payable",
@@ -77,8 +99,19 @@ function parseEther(amount: string): any {
 export async function getAgentRegistryContract(
   signerOrProvider: ethers.Signer | ethers.Provider
 ) {
+  // Ensure address is a valid hex address (not ENS name) to avoid ENS resolution errors on Avalanche
+  // Avalanche Fuji doesn't support ENS, so we must use hex addresses directly
+  const address = AGENT_REGISTRY_ADDRESS;
+  if (!address || !address.startsWith('0x') || address.length !== 42) {
+    throw new Error(`Invalid AgentRegistry address: ${address}`);
+  }
+  
+  // Normalize address to avoid ENS resolution
+  const normalizedAddress = normalizeAddress(address);
+  
+  // Create contract with normalized address (no ENS resolution)
   return new ethers.Contract(
-    AGENT_REGISTRY_ADDRESS,
+    normalizedAddress,
     AGENT_REGISTRY_ABI,
     signerOrProvider
   );
@@ -108,10 +141,13 @@ export async function getAgent(signerOrProvider: ethers.Signer | ethers.Provider
 
 export async function getAllAgentsByOwner(signerOrProvider: ethers.Signer | ethers.Provider, ownerAddress: string) {
   try {
-    const contract = await getAgentRegistryContract(signerOrProvider);
-    console.log("Calling getAllAgentsByOwner for:", ownerAddress);
+    // Normalize address to avoid ENS resolution (Avalanche doesn't support ENS)
+    const normalizedOwnerAddress = normalizeAddress(ownerAddress);
     
-    const agentIds = await contract.getAllAgentsByOwner(ownerAddress);
+    const contract = await getAgentRegistryContract(signerOrProvider);
+    console.log("Calling getAllAgentsByOwner for:", normalizedOwnerAddress);
+    
+    const agentIds = await contract.getAllAgentsByOwner(normalizedOwnerAddress);
     console.log("Agent IDs from contract:", agentIds);
     
     if (!agentIds || agentIds.length === 0) {
@@ -148,8 +184,11 @@ export async function getAllAgentsByOwner(signerOrProvider: ethers.Signer | ethe
 }
 
 export async function getAgentByAddress(signerOrProvider: ethers.Signer | ethers.Provider, address: string) {
+  // Normalize address to avoid ENS resolution (Avalanche doesn't support ENS)
+  const normalizedAddress = normalizeAddress(address);
+  
   const contract = await getAgentRegistryContract(signerOrProvider);
-  return contract.getAgentByAddress(address);
+  return contract.getAgentByAddress(normalizedAddress);
 }
 
 export async function addStake(signer: ethers.Signer, agentId: string, amount: string) {
