@@ -2,29 +2,58 @@
 /node_modules
 /.pnp
 .pnp.js
+.pnp.*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # testing
 /coverage
+*.lcov
+.nyc_output
 
 # next.js
 /.next/
 /out/
+.next
+out
 
 # production
 /build
+/dist
+*.tsbuildinfo
 
 # misc
 .DS_Store
 *.pem
+*.log
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# local env files
-.env*.local
+# local env files - CRITICAL: Never commit these!
 .env
+.env.local
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+*.env
+!.env.example
+!.env.template
+!.env.sample
 
 # vercel
 .vercel
@@ -32,13 +61,127 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+tsconfig.tsbuildinfo
 
 # hardhat
 /cache
 /artifacts
 /typechain-types
+/cache/
+/artifacts/
+/typechain-types/
+hardhat.config.js.bak
 
-# deployments
+# deployments - May contain sensitive addresses
 /deployments/*.json
 !deployments/.gitkeep
+!deployments/.gitignore
+
+# Private keys and secrets - NEVER commit these!
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*private*
+*secret*
+*_secret*
+*_private*
+*.priv
+id_rsa
+id_ed25519
+id_ecdsa
+*.p8
+*.p12
+*.pfx
+
+# API keys and tokens
+*api*key*
+*token*
+*auth*
+*credential*
+*password*
+
+# GitHub tokens (gho_, ghp_, ghu_, ghs_, ghr_)
+gho_*
+ghp_*
+ghu_*
+ghs_*
+ghr_*
+
+# Thirdweb secrets
+THIRDWEB_SECRET_KEY
+THIRDWEB_SERVER_WALLET_ADDRESS
+FACILITATOR_PRIVATE_KEY
+
+# Blockchain private keys
+DEPLOYER_PRIVATE_KEY
+PRIVATE_KEY
+*_PRIVATE_KEY
+*_PRIVATE_KEY_*
+
+# API keys
+GEMINI_API_KEY
+GOOGLE_GEMINI_API_KEY
+KITE_API_KEY
+SNOWTRACE_API_KEY
+COINMARKETCAP_API_KEY
+PINATA_API_KEY
+PINATA_SECRET_KEY
+PINATA_JWT
+
+# Wallet addresses (if sensitive)
+MERCHANT_WALLET_ADDRESS
+
+# markdown files (exclude all .md except README.md)
+*.md
+!README.md
+!README.MD
+!readme.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# SDK build outputs
+packages/*/dist
+packages/*/build
+packages/*/coverage
+packages/*/.turbo
+packages/*/node_modules
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+
+# Lock files (keep pnpm-lock.yaml but ignore others)
+package-lock.json
+yarn.lock
+
+# Coverage reports
+coverage/
+*.lcov
+.nyc_output/
+
+# Build outputs
+dist/
+build/
+out/
+*.tsbuildinfo
 

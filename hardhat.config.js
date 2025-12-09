@@ -1,16 +1,11 @@
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import "@nomicfoundation/hardhat-verify";
-import "hardhat-gas-reporter";
-import "solidity-coverage";
-import "dotenv/config";
-import * as dotenv from "dotenv";
+require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-verify");
+require("hardhat-gas-reporter");
+require("solidity-coverage");
+require("dotenv/config");
 
-// Load .env.local first, then .env as fallback
-const envLocal = dotenv.config({ path: ".env.local" });
-dotenv.config(); // Load .env if needed
-
-const config: HardhatUserConfig = {
+/** @type import('hardhat/config').HardhatUserConfig */
+module.exports = {
   solidity: {
     version: "0.8.20",
     settings: {
@@ -38,19 +33,9 @@ const config: HardhatUserConfig = {
     },
     fuji: {
       url: process.env.AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc",
-      accounts: (() => {
-        // Try .env.local first, then fallback to .env
-        const key = process.env.DEPLOYER_PRIVATE_KEY?.trim();
-        if (!key) {
-          return [];
-        }
-        // Ensure we have exactly 64 hex characters (32 bytes)
-        const cleanKey = key.replace(/^0x/, "").replace(/\s/g, "");
-        if (cleanKey.length !== 64 || !/^[0-9a-fA-F]{64}$/.test(cleanKey)) {
-          return [];
-        }
-        return [`0x${cleanKey}`];
-      })(),
+      accounts: process.env.DEPLOYER_PRIVATE_KEY && process.env.DEPLOYER_PRIVATE_KEY.length >= 64 
+        ? [process.env.DEPLOYER_PRIVATE_KEY] 
+        : [],
       chainId: 43113,
       gasPrice: "auto",
       gas: 8000000,
@@ -115,6 +100,4 @@ const config: HardhatUserConfig = {
     target: "ethers-v6",
   },
 };
-
-export default config;
 
