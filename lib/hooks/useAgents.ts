@@ -15,13 +15,41 @@ export function useAgents() {
       try {
         console.log("useAgents - Starting fetch, address:", address, "sdk:", !!sdk);
         
-        const provider = sdk.getProvider();
-        if (!provider) {
-          console.error("useAgents - No provider available from SDK");
-          return [];
+        // Try to get provider from SDK, with fallback to public RPC
+        let provider = null;
+        try {
+          provider = sdk.getProvider();
+          console.log("useAgents - Provider obtained from SDK:", provider);
+        } catch (e) {
+          console.warn("useAgents - Could not get provider from SDK, using fallback:", e);
         }
         
-        console.log("useAgents - Provider obtained:", provider);
+        // Fallback: Create provider directly from public RPC URL
+        // This avoids Thirdweb RPC authentication issues
+        if (!provider) {
+          const rpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
+          console.log("useAgents - Creating fallback provider with RPC:", rpcUrl);
+          
+          // Use ethers v5 API (providers.JsonRpcProvider)
+          // Type assertion needed because TypeScript sees ethers v6 types, but runtime uses v5
+          const ethersAny = ethers as any;
+          // Check if providers exists, otherwise try direct JsonRpcProvider
+          if (ethersAny.providers && ethersAny.providers.JsonRpcProvider) {
+            provider = new ethersAny.providers.JsonRpcProvider(rpcUrl);
+          } else if (ethersAny.JsonRpcProvider) {
+            // Fallback for ethers v6 style
+            provider = new ethersAny.JsonRpcProvider(rpcUrl);
+          } else {
+            console.error("useAgents - Cannot create provider: ethers.providers.JsonRpcProvider not available");
+            return [];
+          }
+          console.log("useAgents - Fallback provider created:", provider);
+        }
+        
+        if (!provider) {
+          console.error("useAgents - No provider available");
+          return [];
+        }
         
         // Verify provider has getNetwork method (ethers provider)
         if (typeof provider.getNetwork !== 'function') {
@@ -38,6 +66,7 @@ export function useAgents() {
           }
         } catch (networkError) {
           console.error("useAgents - Error getting network:", networkError);
+          // Continue anyway, network check is not critical
         }
         
         // Normalize address to avoid ENS resolution (Avalanche doesn't support ENS)
