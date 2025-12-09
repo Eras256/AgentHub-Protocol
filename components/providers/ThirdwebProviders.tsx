@@ -4,6 +4,14 @@ import { ReactNode } from "react";
 import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { AvalancheFuji } from "@thirdweb-dev/chains";
 
+// Custom Avalanche Fuji chain configuration with public RPC
+// This avoids ThirdWeb RPC authentication issues (401 errors)
+const publicRpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
+const AvalancheFujiCustom = {
+  ...AvalancheFuji,
+  rpc: [publicRpcUrl], // RPC must be an array of strings
+};
+
 export function ThirdwebProviders({ children }: { children: ReactNode }) {
   const clientId = process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID;
 
@@ -18,9 +26,9 @@ export function ThirdwebProviders({ children }: { children: ReactNode }) {
 
   return (
     <ThirdwebProvider
-      activeChain={AvalancheFuji}
+      activeChain={AvalancheFujiCustom}
       clientId={clientId}
-      supportedChains={[AvalancheFuji]}
+      supportedChains={[AvalancheFujiCustom]}
     >
       {children}
     </ThirdwebProvider>

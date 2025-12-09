@@ -5,6 +5,15 @@ import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { AvalancheFuji } from "@thirdweb-dev/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+// Custom Avalanche Fuji chain configuration with public RPC
+// This avoids ThirdWeb RPC authentication issues (401 errors)
+// According to ThirdWeb v4 documentation, we can override the RPC URL
+const publicRpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
+const AvalancheFujiCustom = {
+  ...AvalancheFuji,
+  rpc: [publicRpcUrl], // RPC must be an array of strings
+};
+
 export function ClientProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -35,11 +44,12 @@ export function ClientProviders({ children }: { children: ReactNode }) {
   // According to Thirdweb v4 documentation, clientId is required
   // If not provided, we still render the provider but it will show connection errors
   // This is better than crashing the entire app
+  // Using custom chain with public RPC to avoid 401 authentication errors
   return (
     <ThirdwebProvider
-      activeChain={AvalancheFuji}
+      activeChain={AvalancheFujiCustom}
       clientId={clientId || ""}
-      supportedChains={[AvalancheFuji]}
+      supportedChains={[AvalancheFujiCustom]}
     >
       <QueryClientProvider client={queryClient}>
         {children}
