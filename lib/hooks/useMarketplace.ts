@@ -159,10 +159,41 @@ export function useRequestService() {
     mutationFn: async (serviceId: string) => {
       if (!sdk) throw new Error("SDK not initialized");
       
-      const signer = await sdk.getSigner();
-      if (!signer) throw new Error("Signer not available");
+      // Get the original signer from Thirdweb SDK
+      const originalSigner = await sdk.getSigner();
+      if (!originalSigner) throw new Error("Signer not available");
       
-      const tx = await requestService(signer, serviceId);
+      // Create a provider without ENS support to avoid ENS resolution errors
+      // This is critical for Avalanche networks which don't support ENS
+      const rpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
+      const ethersAny = ethers as any;
+      
+      let providerWithoutENS;
+      if (ethersAny.providers && ethersAny.providers.JsonRpcProvider) {
+        providerWithoutENS = new ethersAny.providers.JsonRpcProvider(rpcUrl, {
+          name: 'avalanche-fuji',
+          chainId: 43113,
+          ensAddress: null, // Explicitly disable ENS
+        });
+      } else if (ethersAny.JsonRpcProvider) {
+        providerWithoutENS = new ethersAny.JsonRpcProvider(rpcUrl, {
+          name: 'avalanche-fuji',
+          chainId: 43113,
+          ensAddress: null, // Explicitly disable ENS
+        });
+      } else {
+        throw new Error("Cannot create provider: ethers.providers.JsonRpcProvider not available");
+      }
+      
+      // Create a new signer with the provider that has ENS disabled
+      // Get the private key from the original signer's provider
+      const signerAddress = await originalSigner.getAddress();
+      
+      // Connect the original signer to the provider without ENS
+      // This preserves the wallet connection but uses a provider that doesn't try to resolve ENS
+      const signerWithoutENS = originalSigner.connect(providerWithoutENS);
+      
+      const tx = await requestService(signerWithoutENS, serviceId);
       return tx;
     },
     onSuccess: () => {

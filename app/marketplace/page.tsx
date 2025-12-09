@@ -74,7 +74,37 @@ export default function MarketplacePage() {
         // Normalize addresses to avoid ENS resolution (Avalanche doesn't support ENS)
         const usdcAddress = normalizeAddress("0x5425890298aed601595a70AB815c96711a31Bc65");
         const usdcAbi = ["function balanceOf(address) view returns (uint256)", "function allowance(address,address) view returns (uint256)", "function approve(address,uint256) returns (bool)"];
-        const signer = await sdk.getSigner();
+        
+        // Get the original signer from Thirdweb SDK
+        const originalSigner = await sdk.getSigner();
+        if (!originalSigner) {
+          throw new Error("Signer not available");
+        }
+        
+        // Create a provider without ENS support to avoid ENS resolution errors
+        // This is critical for Avalanche networks which don't support ENS
+        const rpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
+        const ethersAny = ethers as any;
+        
+        let providerWithoutENS;
+        if (ethersAny.providers && ethersAny.providers.JsonRpcProvider) {
+          providerWithoutENS = new ethersAny.providers.JsonRpcProvider(rpcUrl, {
+            name: 'avalanche-fuji',
+            chainId: 43113,
+            ensAddress: null, // Explicitly disable ENS
+          });
+        } else if (ethersAny.JsonRpcProvider) {
+          providerWithoutENS = new ethersAny.JsonRpcProvider(rpcUrl, {
+            name: 'avalanche-fuji',
+            chainId: 43113,
+            ensAddress: null, // Explicitly disable ENS
+          });
+        } else {
+          throw new Error("Cannot create provider: ethers.providers.JsonRpcProvider not available");
+        }
+        
+        // Connect the original signer to the provider without ENS
+        const signer = originalSigner.connect(providerWithoutENS);
         
         // Normalize marketplace address
         const marketplaceAddressRaw = process.env.NEXT_PUBLIC_SERVICE_MARKETPLACE_ADDRESS || "";
@@ -83,7 +113,7 @@ export default function MarketplacePage() {
         // Normalize user address
         const normalizedUserAddress = normalizeAddress(address);
         
-        // Create USDC contract with normalized address (no ENS resolution)
+        // Create USDC contract with normalized address and signer without ENS (no ENS resolution)
         const usdcContract = new ethers.Contract(usdcAddress, usdcAbi, signer);
         
         const balance = await usdcContract.balanceOf(normalizedUserAddress);
