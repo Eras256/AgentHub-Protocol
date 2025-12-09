@@ -49,13 +49,22 @@ export default function MarketplacePage() {
 
       try {
         // Check USDC balance and allowance
-        const usdcAddress = "0x5425890298aed601595a70AB815c96711a31Bc65";
+        // Normalize addresses to avoid ENS resolution (Avalanche doesn't support ENS)
+        const usdcAddress = normalizeAddress("0x5425890298aed601595a70AB815c96711a31Bc65");
         const usdcAbi = ["function balanceOf(address) view returns (uint256)", "function allowance(address,address) view returns (uint256)", "function approve(address,uint256) returns (bool)"];
         const signer = await sdk.getSigner();
-        const usdcContract = new ethers.Contract(usdcAddress, usdcAbi, signer);
-        const marketplaceAddress = process.env.NEXT_PUBLIC_SERVICE_MARKETPLACE_ADDRESS || "";
         
-        const balance = await usdcContract.balanceOf(address);
+        // Normalize marketplace address
+        const marketplaceAddressRaw = process.env.NEXT_PUBLIC_SERVICE_MARKETPLACE_ADDRESS || "";
+        const marketplaceAddress = normalizeAddress(marketplaceAddressRaw);
+        
+        // Normalize user address
+        const normalizedUserAddress = normalizeAddress(address);
+        
+        // Create USDC contract with normalized address (no ENS resolution)
+        const usdcContract = new ethers.Contract(usdcAddress, usdcAbi, signer);
+        
+        const balance = await usdcContract.balanceOf(normalizedUserAddress);
         // Use ethers v5 API: ethers.utils.parseUnits
         // TypeScript sees ethers v6 types, but runtime uses v5 via webpack alias
         const price = (ethers as any).utils.parseUnits(service.pricePerRequest, 6);
@@ -65,9 +74,9 @@ export default function MarketplacePage() {
           return;
         }
 
-        const allowance = await usdcContract.allowance(address, marketplaceAddress);
+        const allowance = await usdcContract.allowance(normalizedUserAddress, marketplaceAddress);
         if (allowance < price) {
-          // Request approval
+          // Request approval with normalized addresses
           const approveTx = await usdcContract.approve(marketplaceAddress, price);
           await approveTx.wait();
         }
