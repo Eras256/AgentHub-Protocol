@@ -52,7 +52,13 @@ export default function PublishServicePage() {
         pricePerRequest: formData.pricePerRequest,
       });
 
-      setTransactionHash(receipt.hash);
+      // Get transaction hash - ethers v5 uses transactionHash, v6 uses hash
+      const txHash = receipt.transactionHash || receipt.hash || receipt.transaction?.hash;
+      console.log("Service published:", { txHash, receipt });
+      if (!txHash) {
+        console.error("No transaction hash found in receipt:", receipt);
+      }
+      setTransactionHash(txHash || "");
       setShowSuccessModal(true);
     } catch (error: any) {
       console.error("Error publishing service:", error);

@@ -123,7 +123,9 @@ export default function CreateAgentPage() {
         stakeAmount: minStake, // Use real minStake from contract
       });
 
-      console.log("Agent registered:", { agentId, txHash: receipt.hash });
+      // Get transaction hash - ethers v5 uses transactionHash, v6 uses hash
+      const txHash = receipt.transactionHash || receipt.hash || receipt.transaction?.hash;
+      console.log("Agent registered:", { agentId, txHash, receipt });
       
       // Store agentId mapping in localStorage for easy lookup
       try {
@@ -147,9 +149,12 @@ export default function CreateAgentPage() {
       }
       
       // Show success modal with transaction details
+      if (!txHash) {
+        console.error("No transaction hash found in receipt:", receipt);
+      }
       setSuccessData({
         agentId,
-        transactionHash: receipt.hash,
+        transactionHash: txHash || "",
       });
       setShowSuccessModal(true);
       

@@ -179,47 +179,38 @@ export default function SuccessModal({
                     className="mb-6"
                   >
                     <div className="p-4 bg-gradient-to-r from-purple-600/20 to-cyan-600/20 rounded-lg border border-purple-500/30">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="text-xs text-gray-400 mb-1">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-gray-400 mb-2">
                             Transaction Hash
                           </div>
-                          <div className="font-mono text-sm text-white break-all">
+                          <div className="font-mono text-xs sm:text-sm text-white break-all mb-3">
                             {transactionHash}
                           </div>
-                        </div>
-                        <div className="flex items-center space-x-2 ml-4">
-                          <button
-                            onClick={() => copyToClipboard(transactionHash)}
-                            className="p-2 hover:bg-white/10 rounded transition-colors"
-                            aria-label="Copy transaction hash"
-                          >
-                            {copied ? (
-                              <Check className="w-4 h-4 text-green-400" />
-                            ) : (
-                              <Copy className="w-4 h-4 text-gray-400" />
-                            )}
-                          </button>
-                          <a
-                            href={getExplorerUrl(transactionHash)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 hover:bg-white/10 rounded transition-colors"
-                            aria-label="View on Snowtrace"
-                          >
-                            <ExternalLink className="w-4 h-4 text-cyan-400" />
-                          </a>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => copyToClipboard(transactionHash)}
+                              className="p-1.5 sm:p-2 hover:bg-white/10 rounded transition-colors"
+                              aria-label="Copy transaction hash"
+                            >
+                              {copied ? (
+                                <Check className="w-4 h-4 text-green-400" />
+                              ) : (
+                                <Copy className="w-4 h-4 text-gray-400" />
+                              )}
+                            </button>
+                            <a
+                              href={getExplorerUrl(transactionHash)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 inline-flex items-center justify-center space-x-2 bg-cyan-600/20 hover:bg-cyan-600/30 text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all border border-cyan-500/30 hover:border-cyan-500/50"
+                            >
+                              <span>View on Snowtrace</span>
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </div>
                         </div>
                       </div>
-                      <a
-                        href={getExplorerUrl(transactionHash)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-3 flex items-center justify-center space-x-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
-                      >
-                        <span>View on Snowtrace</span>
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
                     </div>
                   </motion.div>
                 )}
