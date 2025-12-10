@@ -38,6 +38,7 @@
     "tailwind-merge": "^2.2.0",
     "thirdweb": "^5.70.0",
     "viem": "^2.21.50",
+    "zod": "^3.22.4",
     "zustand": "^4.4.7"
   },
   "devDependencies": {
@@ -46,6 +47,7 @@
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.3",
     "@openzeppelin/contracts": "^5.0.1",
+    "@types/chai": "^5.2.3",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^18",
