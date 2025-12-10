@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSDK, useAddress } from "@thirdweb-dev/react";
 import { getAllServices, publishService, requestService } from "@/lib/contracts/marketplace";
 import { ethers } from "ethers";
+import { validateAndNormalizeAddress, isValidAddress } from "@/lib/utils";
 
 // Helper function to create public RPC provider (avoids Thirdweb RPC auth issues)
 function createPublicRpcProvider() {
@@ -39,10 +40,12 @@ export function useMarketplaceServices() {
       try {
         // Always use public RPC to avoid Thirdweb RPC authentication issues
         const provider = createPublicRpcProvider();
+        console.log("useMarketplaceServices - Provider created:", provider?.constructor?.name);
         
-        console.log("Fetching services from marketplace contract...");
+        console.log("useMarketplaceServices - Fetching services from marketplace contract...");
         const services = await getAllServices(provider);
-        console.log("Raw services from contract:", services);
+        console.log("useMarketplaceServices - Raw services from contract:", services);
+        console.log("useMarketplaceServices - Services count:", services?.length || 0);
         
         if (!services || services.length === 0) {
           console.log("No services found in marketplace");
@@ -57,6 +60,13 @@ export function useMarketplaceServices() {
             const ethersAny = ethers as any;
             const zeroHash = ethersAny.constants?.HashZero || ethersAny.ZeroHash || '0x0000000000000000000000000000000000000000000000000000000000000000';
             const zeroAddress = ethersAny.constants?.AddressZero || ethersAny.ZeroAddress || '0x0000000000000000000000000000000000000000';
+            
+            // Exclude "Force Coverage Test" services
+            const serviceName = service.name?.trim().toLowerCase() || '';
+            if (serviceName.includes('force coverage test')) {
+              console.log("Filtering out Force Coverage Test service:", service.name);
+              return false;
+            }
             
             const isValid = service && 
               service.serviceId && 
@@ -107,9 +117,11 @@ export function useMarketplaceServices() {
         console.log("Valid services after filtering:", validServices);
         return validServices;
       } catch (error: any) {
-        console.error("Error fetching marketplace services:", error);
-        console.error("Error details:", error.message, error.stack);
-        // Don't throw in production, return empty array instead
+        console.error("useMarketplaceServices - Error fetching marketplace services:", error);
+        console.error("useMarketplaceServices - Error message:", error?.message);
+        console.error("useMarketplaceServices - Error stack:", error?.stack);
+        // Return empty array but log error for debugging
+        // This prevents the UI from breaking, but errors will be visible in console
         return [];
       }
     },
@@ -150,6 +162,55 @@ export function usePublishService() {
   });
 }
 
+// Helper to intercept ENS resolution in signer's provider (same as in marketplace.ts and page.tsx)
+function interceptENSInSigner(signer: any) {
+  const ethersAny = ethers as any;
+  const originalProvider = signer.provider;
+  
+  if (originalProvider && typeof originalProvider === 'object') {
+    // Intercept getResolver - this is called before resolveName and causes the error
+    if (typeof originalProvider.getResolver === 'function') {
+      const originalGetResolver = originalProvider.getResolver.bind(originalProvider);
+      originalProvider.getResolver = async (name: string) => {
+        // If it's already a valid hex address, return null (no resolver needed)
+        if (name && name.startsWith('0x') && name.length === 42) {
+          return null;
+        }
+        // For non-address names, throw error immediately to prevent ENS resolution
+        throw new Error(`Network does not support ENS resolution for: ${name}`);
+      };
+    }
+    
+    // Intercept resolveName - return address directly if it's already a hex address
+    if (typeof originalProvider.resolveName === 'function') {
+      const originalResolveName = originalProvider.resolveName.bind(originalProvider);
+      originalProvider.resolveName = async (nameOrAddress: string) => {
+        // If it's already a valid hex address, return it directly
+        if (nameOrAddress && nameOrAddress.startsWith('0x') && nameOrAddress.length === 42) {
+          return nameOrAddress;
+        }
+        // For non-address names, throw error to prevent ENS resolution
+        throw new Error(`Network does not support ENS resolution for: ${nameOrAddress}`);
+      };
+    }
+    
+    // Also ensure the provider has ENS disabled in network config
+    try {
+      if ('_network' in originalProvider && originalProvider._network) {
+        originalProvider._network.ensAddress = null;
+      }
+      // Also try to set it directly on the provider
+      if ('network' in originalProvider && originalProvider.network) {
+        originalProvider.network.ensAddress = null;
+      }
+    } catch (e) {
+      // Ignore if we can't modify the network config
+    }
+  }
+  
+  return signer;
+}
+
 export function useRequestService() {
   const sdk = useSDK();
   const address = useAddress();
@@ -159,42 +220,17 @@ export function useRequestService() {
     mutationFn: async (serviceId: string) => {
       if (!sdk) throw new Error("SDK not initialized");
       
-      // Get the original signer from Thirdweb SDK
-      const originalSigner = await sdk.getSigner();
-      if (!originalSigner) throw new Error("Signer not available");
+      // Get the signer from Thirdweb SDK
+      const signer = await sdk.getSigner();
+      if (!signer) throw new Error("Signer not available");
       
-      // Create a provider without ENS support to avoid ENS resolution errors
-      // This is critical for Avalanche networks which don't support ENS
-      const rpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
-      const ethersAny = ethers as any;
+      // CRITICAL: Intercept ENS resolution in signer's provider before using it
+      // This prevents "getResolver" errors when creating contracts with the signer
+      interceptENSInSigner(signer);
       
-      let providerWithoutENS;
-      if (ethersAny.providers && ethersAny.providers.JsonRpcProvider) {
-        providerWithoutENS = new ethersAny.providers.JsonRpcProvider(rpcUrl, {
-          name: 'avalanche-fuji',
-          chainId: 43113,
-          ensAddress: null, // Explicitly disable ENS
-        });
-      } else if (ethersAny.JsonRpcProvider) {
-        providerWithoutENS = new ethersAny.JsonRpcProvider(rpcUrl, {
-          name: 'avalanche-fuji',
-          chainId: 43113,
-          ensAddress: null, // Explicitly disable ENS
-        });
-      } else {
-        throw new Error("Cannot create provider: ethers.providers.JsonRpcProvider not available");
-      }
-      
-      // Create a new signer with the provider that has ENS disabled
-      // Get the private key from the original signer's provider
-      const signerAddress = await originalSigner.getAddress();
-      
-      // Connect the original signer to the provider without ENS
-      // This preserves the wallet connection but uses a provider that doesn't try to resolve ENS
-      const signerWithoutENS = originalSigner.connect(providerWithoutENS);
-      
-      const tx = await requestService(signerWithoutENS, serviceId);
-      return tx;
+      // Use the signer - ENS already intercepted, contract functions will normalize addresses
+      const result = await requestService(signer, serviceId);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["marketplace-services"] });
@@ -203,13 +239,31 @@ export function useRequestService() {
   });
 }
 
+/**
+ * Helper function that returns null instead of throwing (for use in hooks)
+ * Use this when you want to handle invalid addresses gracefully
+ */
+function validateAndNormalizeAddressSafe(address: string | undefined | null): string | null {
+  try {
+    return validateAndNormalizeAddress(address);
+  } catch (error) {
+    return null;
+  }
+}
+
 export function useConsumerRequests() {
   const address = useAddress();
 
   return useQuery({
     queryKey: ["consumer-requests", address],
     queryFn: async () => {
-      if (!address) return [];
+      // Validate and normalize address before using it
+      const normalizedAddress = validateAndNormalizeAddressSafe(address);
+      
+      if (!normalizedAddress) {
+        console.log("useConsumerRequests - No valid address, returning empty array");
+        return [];
+      }
       
       try {
         // Always use public RPC to avoid Thirdweb RPC authentication issues
@@ -219,7 +273,9 @@ export function useConsumerRequests() {
           m.getMarketplaceContract(provider)
         );
         
-        const requests = await contract.getConsumerRequests(address);
+        // Use normalized address - this ensures it's a valid hex address string
+        console.log("useConsumerRequests - Fetching requests for address:", normalizedAddress);
+        const requests = await contract.getConsumerRequests(normalizedAddress);
         
         return requests.map((request: any) => ({
           requestId: request.requestId,
@@ -233,10 +289,18 @@ export function useConsumerRequests() {
         }));
       } catch (error) {
         console.error("Error fetching consumer requests:", error);
+        console.error("Error details:", {
+          address: address,
+          normalizedAddress: normalizedAddress,
+          errorMessage: (error as any)?.message,
+        });
         return [];
       }
     },
-    enabled: !!address,
+    // Esto es clave: si address es null/error, la query ni siquiera arranca
+    // Usa isValidAddress() que usa ethers.utils.isAddress() internamente
+    enabled: isValidAddress(address),
   });
 }
+
 

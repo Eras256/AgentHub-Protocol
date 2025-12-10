@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Filter, Zap, Loader2, Bot } from "lucide-react";
 import Link from "next/link";
 import GlassCard from "@/components/effects/GlassCard";
@@ -12,37 +12,104 @@ import { useMarketplaceServices, useRequestService } from "@/lib/hooks/useMarket
 import { useAddress, useSDK } from "@thirdweb-dev/react";
 import ServiceCard from "@/components/marketplace/ServiceCard";
 import { ethers } from "ethers";
-import { useEffect } from "react";
+import { validateAndNormalizeAddress, isValidAddress } from "@/lib/utils";
 
+// Legacy function name for backward compatibility
 // Helper function to normalize addresses and avoid ENS resolution
 // Avalanche networks don't support ENS, so we must use hex addresses directly
 function normalizeAddress(address: string): string {
-  if (!address || !address.startsWith('0x') || address.length !== 42) {
-    return address; // Return as-is if not a valid hex address
-  }
-  
-  const ethersAny = ethers as any;
   try {
-    // Normalize address format (checksum)
-    return ethersAny.utils?.getAddress 
-      ? ethersAny.utils.getAddress(address)
-      : ethersAny.getAddress 
-      ? ethersAny.getAddress(address)
-      : address;
+    return validateAndNormalizeAddress(address);
   } catch (error) {
-    // If normalization fails, return original address
-    console.warn('Address normalization failed, using original:', address);
+    // If validation fails, return as-is (for backward compatibility)
+    console.warn('Address normalization failed, using original:', address, error);
     return address;
   }
+}
+
+// Helper to create provider without ENS
+function createProviderWithoutENS() {
+  const rpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
+  const ethersAny = ethers as any;
+  
+  if (ethersAny.providers && ethersAny.providers.JsonRpcProvider) {
+    return new ethersAny.providers.JsonRpcProvider(rpcUrl, {
+      name: 'avalanche-fuji',
+      chainId: 43113,
+      ensAddress: null, // Explicitly disable ENS
+    });
+  } else if (ethersAny.JsonRpcProvider) {
+    return new ethersAny.JsonRpcProvider(rpcUrl, {
+      name: 'avalanche-fuji',
+      chainId: 43113,
+      ensAddress: null, // Explicitly disable ENS
+    });
+  }
+  
+  throw new Error("Cannot create provider: ethers.providers.JsonRpcProvider not available");
+}
+
+// Helper to intercept ENS resolution in signer's provider (same solution as getMarketplaceContract)
+function interceptENSInSigner(signer: any) {
+  const ethersAny = ethers as any;
+  const originalProvider = signer.provider;
+  
+  if (originalProvider && typeof originalProvider === 'object') {
+    // Intercept getResolver - this is called before resolveName and causes the error
+    if (typeof originalProvider.getResolver === 'function') {
+      const originalGetResolver = originalProvider.getResolver.bind(originalProvider);
+      originalProvider.getResolver = async (name: string) => {
+        // If it's already a valid hex address, return null (no resolver needed)
+        if (name && name.startsWith('0x') && name.length === 42) {
+          return null;
+        }
+        // For non-address names, throw error immediately to prevent ENS resolution
+        throw new Error(`Network does not support ENS resolution for: ${name}`);
+      };
+    }
+    
+    // Intercept resolveName - return address directly if it's already a hex address
+    if (typeof originalProvider.resolveName === 'function') {
+      const originalResolveName = originalProvider.resolveName.bind(originalProvider);
+      originalProvider.resolveName = async (nameOrAddress: string) => {
+        // If it's already a valid hex address, return it directly
+        if (nameOrAddress && nameOrAddress.startsWith('0x') && nameOrAddress.length === 42) {
+          return nameOrAddress;
+        }
+        // For non-address names, throw error to prevent ENS resolution
+        throw new Error(`Network does not support ENS resolution for: ${nameOrAddress}`);
+      };
+    }
+    
+    // Also ensure the provider has ENS disabled in network config
+    try {
+      if ('_network' in originalProvider && originalProvider._network) {
+        originalProvider._network.ensAddress = null;
+      }
+      // Also try to set it directly on the provider
+      if ('network' in originalProvider && originalProvider.network) {
+        originalProvider.network.ensAddress = null;
+      }
+    } catch (e) {
+      // Ignore if we can't modify the network config
+    }
+  }
+  
+  return signer;
 }
 
 export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const address = useAddress();
   const sdk = useSDK();
   const { data: services = [], isLoading, error } = useMarketplaceServices();
   const requestServiceMutation = useRequestService();
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Debug logging
   if (typeof window !== 'undefined') {
@@ -51,11 +118,19 @@ export default function MarketplacePage() {
     console.log("Marketplace - Error:", error);
   }
 
+
   // Handle service request
   useEffect(() => {
     const handleRequestService = async (event: CustomEvent) => {
       if (!address || !sdk) {
         alert("Please connect your wallet first");
+        return;
+      }
+
+      // Validate address is a valid hex string before proceeding
+      if (!isValidAddress(address)) {
+        console.error("Invalid address format:", address);
+        alert("Invalid wallet address. Please reconnect your wallet.");
         return;
       }
 
@@ -73,70 +148,186 @@ export default function MarketplacePage() {
         // Check USDC balance and allowance
         // Normalize addresses to avoid ENS resolution (Avalanche doesn't support ENS)
         const usdcAddress = normalizeAddress("0x5425890298aed601595a70AB815c96711a31Bc65");
+        
+        // Validate USDC address
+        if (!isValidAddress(usdcAddress)) {
+          throw new Error("Invalid USDC contract address");
+        }
+        
         const usdcAbi = ["function balanceOf(address) view returns (uint256)", "function allowance(address,address) view returns (uint256)", "function approve(address,uint256) returns (bool)"];
         
-        // Get the original signer from Thirdweb SDK
-        const originalSigner = await sdk.getSigner();
-        if (!originalSigner) {
+        // Get the signer from Thirdweb SDK
+        const signer = await sdk.getSigner();
+        if (!signer) {
           throw new Error("Signer not available");
         }
         
-        // Create a provider without ENS support to avoid ENS resolution errors
-        // This is critical for Avalanche networks which don't support ENS
-        const rpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
+        // CRITICAL: Intercept ENS resolution in signer's provider before creating contracts
+        // This prevents "getResolver" errors when creating contracts with the signer
+        interceptENSInSigner(signer);
+        
+        // Create a provider without ENS support for read operations
+        // This avoids ENS resolution errors when creating contracts
+        const providerWithoutENS = createProviderWithoutENS();
         const ethersAny = ethers as any;
-        
-        let providerWithoutENS;
-        if (ethersAny.providers && ethersAny.providers.JsonRpcProvider) {
-          providerWithoutENS = new ethersAny.providers.JsonRpcProvider(rpcUrl, {
-            name: 'avalanche-fuji',
-            chainId: 43113,
-            ensAddress: null, // Explicitly disable ENS
-          });
-        } else if (ethersAny.JsonRpcProvider) {
-          providerWithoutENS = new ethersAny.JsonRpcProvider(rpcUrl, {
-            name: 'avalanche-fuji',
-            chainId: 43113,
-            ensAddress: null, // Explicitly disable ENS
-          });
-        } else {
-          throw new Error("Cannot create provider: ethers.providers.JsonRpcProvider not available");
-        }
-        
-        // Connect the original signer to the provider without ENS
-        const signer = originalSigner.connect(providerWithoutENS);
         
         // Normalize marketplace address
         const marketplaceAddressRaw = process.env.NEXT_PUBLIC_SERVICE_MARKETPLACE_ADDRESS || "";
         const marketplaceAddress = normalizeAddress(marketplaceAddressRaw);
         
-        // Normalize user address
+        // Validate marketplace address
+        if (!isValidAddress(marketplaceAddress)) {
+          throw new Error("Invalid marketplace contract address");
+        }
+        
+        // Normalize user address - already validated above, but normalize for consistency
         const normalizedUserAddress = normalizeAddress(address);
         
-        // Create USDC contract with normalized address and signer without ENS (no ENS resolution)
-        const usdcContract = new ethers.Contract(usdcAddress, usdcAbi, signer);
+        // Double-check normalized address is still valid
+        if (!isValidAddress(normalizedUserAddress)) {
+          throw new Error("Failed to normalize user address");
+        }
         
-        const balance = await usdcContract.balanceOf(normalizedUserAddress);
+        // Create USDC contract with provider without ENS for read operations
+        // Use provider without ENS to avoid ENS resolution when creating contract
+        const usdcContractRead = new ethers.Contract(usdcAddress, usdcAbi, providerWithoutENS);
+        
+        // For write operations, use signer (ENS already intercepted, contract address is normalized)
+        const usdcContractWrite = new ethers.Contract(usdcAddress, usdcAbi, signer);
+        
+        // Check balance using provider without ENS
+        const balance = await usdcContractRead.balanceOf(normalizedUserAddress);
         // Use ethers v5 API: ethers.utils.parseUnits
         // TypeScript sees ethers v6 types, but runtime uses v5 via webpack alias
-        const price = (ethers as any).utils.parseUnits(service.pricePerRequest, 6);
+        const price = ethersAny.utils.parseUnits(service.pricePerRequest, 6);
         
-        if (balance < price) {
-          alert(`Insufficient USDC balance. You need ${service.pricePerRequest} USDC`);
+        // Format balance for display
+        const balanceFormatted = ethersAny.utils?.formatUnits?.(balance, 6) || String(balance);
+        console.log(`USDC Balance: ${balanceFormatted} USDC, Required: ${service.pricePerRequest} USDC`);
+        
+        // Compare BigNumber values correctly (ethers v5 uses BigNumber, v6 uses bigint)
+        // In ethers v5, balance and price are already BigNumber objects
+        // Use BigNumber's lt (less than) method for comparison
+        let isInsufficient = false;
+        try {
+          if (ethersAny.BigNumber && ethersAny.BigNumber.isBigNumber && ethersAny.BigNumber.isBigNumber(balance) && ethersAny.BigNumber.isBigNumber(price)) {
+            // Both are BigNumber (ethers v5)
+            isInsufficient = balance.lt(price);
+          } else if (typeof balance === 'bigint' && typeof price === 'bigint') {
+            // Both are bigint (ethers v6)
+            isInsufficient = balance < price;
+          } else {
+            // Fallback: convert to string and compare as BigInt
+            const balanceStr = balance.toString();
+            const priceStr = price.toString();
+            isInsufficient = BigInt(balanceStr) < BigInt(priceStr);
+          }
+        } catch (compareError) {
+          // If comparison fails, try string comparison as last resort
+          console.warn("Error comparing balance, using string comparison:", compareError);
+          const balanceStr = balance.toString();
+          const priceStr = price.toString();
+          isInsufficient = BigInt(balanceStr) < BigInt(priceStr);
+        }
+        
+        if (isInsufficient) {
+          alert(`Insufficient USDC balance. You have ${balanceFormatted} USDC, but need ${service.pricePerRequest} USDC`);
           return;
         }
 
-        const allowance = await usdcContract.allowance(normalizedUserAddress, marketplaceAddress);
-        if (allowance < price) {
-          // Request approval with normalized addresses
-          const approveTx = await usdcContract.approve(marketplaceAddress, price);
+        // Check allowance using provider without ENS
+        const allowance = await usdcContractRead.allowance(normalizedUserAddress, marketplaceAddress);
+        
+        // Compare allowance with price (same logic as balance comparison)
+        let needsApproval = false;
+        try {
+          if (ethersAny.BigNumber && ethersAny.BigNumber.isBigNumber && ethersAny.BigNumber.isBigNumber(allowance) && ethersAny.BigNumber.isBigNumber(price)) {
+            needsApproval = allowance.lt(price);
+          } else if (typeof allowance === 'bigint' && typeof price === 'bigint') {
+            needsApproval = allowance < price;
+          } else {
+            const allowanceStr = allowance.toString();
+            const priceStr = price.toString();
+            needsApproval = BigInt(allowanceStr) < BigInt(priceStr);
+          }
+        } catch (compareError) {
+          console.warn("Error comparing allowance, using string comparison:", compareError);
+          const allowanceStr = allowance.toString();
+          const priceStr = price.toString();
+          needsApproval = BigInt(allowanceStr) < BigInt(priceStr);
+        }
+        
+        if (needsApproval) {
+          // Request approval using signer (write operation)
+          const approveTx = await usdcContractWrite.approve(marketplaceAddress, price);
           await approveTx.wait();
         }
 
         // Request service
         setSelectedServiceId(serviceId);
-        await requestServiceMutation.mutateAsync(serviceId);
-        alert("Service requested successfully!");
+        const result = await requestServiceMutation.mutateAsync(serviceId);
+        
+        // Show success notification with transaction hash and link
+        const txHash = result.hash;
+        const explorerUrl = `https://testnet.snowtrace.io/tx/${txHash}`;
+        const shortHash = `${txHash.slice(0, 10)}...${txHash.slice(-8)}`;
+        
+        // Create a better notification message
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 20px 24px;
+          border-radius: 12px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+          z-index: 10000;
+          max-width: 400px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        `;
+        
+        notification.innerHTML = `
+          <div style="display: flex; align-items: start; gap: 12px;">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 16px; margin-bottom: 8px;">
+                ✓ Service Requested Successfully!
+              </div>
+              <div style="font-size: 13px; opacity: 0.9; margin-bottom: 12px; word-break: break-all;">
+                Transaction Hash: <code style="background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px; font-size: 12px;">${shortHash}</code>
+              </div>
+              <a href="${explorerUrl}" target="_blank" rel="noopener noreferrer" 
+                 style="display: inline-block; background: rgba(255,255,255,0.2); color: white; 
+                        padding: 8px 16px; border-radius: 6px; text-decoration: none; 
+                        font-size: 13px; font-weight: 500; transition: background 0.2s;
+                        border: 1px solid rgba(255,255,255,0.3);">
+                View on Snowtrace →
+              </a>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" 
+                    style="background: none; border: none; color: white; cursor: pointer; 
+                           font-size: 20px; padding: 0; width: 24px; height: 24px; 
+                           display: flex; align-items: center; justify-content: center;
+                           opacity: 0.7; transition: opacity 0.2s;"
+                    onmouseover="this.style.opacity='1'"
+                    onmouseout="this.style.opacity='0.7'">
+              ×
+            </button>
+          </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 8 seconds
+        setTimeout(() => {
+          if (notification.parentElement) {
+            notification.style.transition = 'opacity 0.3s, transform 0.3s';
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(20px)';
+            setTimeout(() => notification.remove(), 300);
+          }
+        }, 8000);
       } catch (error: any) {
         console.error("Error requesting service:", error);
         alert(`Error: ${error.message || "Failed to request service"}`);
@@ -164,6 +355,11 @@ export default function MarketplacePage() {
       if (!service.name || !service.description || !service.provider || !service.pricePerRequest) {
         return false;
       }
+      // Exclude "Force Coverage Test" services
+      const serviceName = service.name?.toLowerCase() || '';
+      if (serviceName.includes('force coverage test')) {
+        return false;
+      }
       // Apply search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -179,8 +375,8 @@ export default function MarketplacePage() {
       <div className="relative pt-24 sm:pt-28 md:pt-32 pb-12 sm:pb-16 md:pb-20 px-3 sm:px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={mounted ? { opacity: 0, y: 20 } : false}
+            animate={mounted ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
             className="mb-8 sm:mb-12"
           >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6">
@@ -279,9 +475,9 @@ export default function MarketplacePage() {
                 {filteredServices.map((service: any, index: number) => (
                   <motion.div
                     key={service.serviceId}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
+                    initial={mounted ? { opacity: 0, y: 20 } : false}
+                    animate={mounted ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+                    transition={{ delay: mounted ? index * 0.1 : 0 }}
                   >
                     <ServiceCard
                       service={{
