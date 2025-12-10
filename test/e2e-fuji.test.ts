@@ -10,7 +10,7 @@
 
 import { expect } from "chai";
 import hre from "hardhat";
-const { ethers } = hre;
+const { ethers } = hre as any;
 import { AgentRegistry } from "../typechain-types";
 import { RevenueDistributor } from "../typechain-types";
 import { ServiceMarketplace } from "../typechain-types";
@@ -436,7 +436,7 @@ describe("AgentHub Protocol - End-to-End Tests on Fuji Testnet", function () {
       console.log("✅ Creator 1 claimed revenue. TX:", receipt!.hash);
 
       const balanceAfter = await usdc.balanceOf(creator1.address);
-      expect(balanceAfter).to.be.gt(balanceBefore);
+      expect(balanceAfter > balanceBefore).to.be.true;
 
       const pendingAfter = await revenueDistributor.getPendingCreatorRevenue(creator1.address);
       expect(pendingAfter).to.equal(0n);
@@ -458,7 +458,7 @@ describe("AgentHub Protocol - End-to-End Tests on Fuji Testnet", function () {
       console.log("✅ Creator 2 claimed revenue. TX:", receipt!.hash);
 
       const balanceAfter = await usdc.balanceOf(creator2.address);
-      expect(balanceAfter).to.be.gt(balanceBefore);
+      expect(balanceAfter > balanceBefore).to.be.true;
     });
   });
 

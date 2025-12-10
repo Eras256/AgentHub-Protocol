@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 const path = require('path');
 
+/**
+ * Environment Variables Validation
+ * This runs at build-time and will fail the build if required env vars are missing/invalid
+ * Esto asegura que si la variable está vacía o es una dirección inválida,
+ * EL BUILD FALLA en Vercel. Así no despliegas código roto a producción.
+ */
+require('./env.js');
+
 const nextConfig = {
   reactStrictMode: true,
   // Transpile thirdweb packages

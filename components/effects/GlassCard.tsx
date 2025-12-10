@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 interface GlassCardProps {
@@ -21,6 +21,12 @@ export default function GlassCard({
   onMouseEnter,
   onMouseLeave,
 }: GlassCardProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const glowColors = {
     purple:
       "shadow-[0_0_50px_rgba(168,85,247,0.4)] hover:shadow-[0_0_80px_rgba(168,85,247,0.6)]",
@@ -31,8 +37,8 @@ export default function GlassCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={mounted ? { opacity: 0, y: 20 } : false}
+      animate={mounted ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
       whileHover={hover ? { scale: 1.02, y: -5 } : {}}
       transition={{ duration: 0.3 }}
       onMouseEnter={onMouseEnter}

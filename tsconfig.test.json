@@ -3,7 +3,7 @@
   "compilerOptions": {
     "types": ["node", "@jest/globals"],
     "module": "commonjs",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
@@ -18,7 +18,8 @@
     "lib/**/*.ts",
     "app/**/*.ts",
     "components/**/*.ts",
-    "next-env.d.ts"
+    "next-env.d.ts",
+    "typechain-types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

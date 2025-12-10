@@ -5,11 +5,12 @@ import { ThirdwebProvider } from "@thirdweb-dev/react";
 import { AvalancheFuji } from "@thirdweb-dev/chains";
 
 // Custom Avalanche Fuji chain configuration with public RPC
-// This avoids ThirdWeb RPC authentication issues (401 errors)
+// This overrides ThirdWeb's RPC to use the public Avalanche RPC
+// This avoids 401 authentication errors in production
 const publicRpcUrl = process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC || "https://api.avax-test.network/ext/bc/C/rpc";
-const AvalancheFujiCustom = {
+const customAvalancheFuji = {
   ...AvalancheFuji,
-  rpc: [publicRpcUrl], // RPC must be an array of strings
+  rpc: [publicRpcUrl] as readonly string[],
 };
 
 export function ThirdwebProviders({ children }: { children: ReactNode }) {
@@ -26,9 +27,9 @@ export function ThirdwebProviders({ children }: { children: ReactNode }) {
 
   return (
     <ThirdwebProvider
-      activeChain={AvalancheFujiCustom}
+      activeChain={customAvalancheFuji}
       clientId={clientId}
-      supportedChains={[AvalancheFujiCustom]}
+      supportedChains={[customAvalancheFuji]}
     >
       {children}
     </ThirdwebProvider>

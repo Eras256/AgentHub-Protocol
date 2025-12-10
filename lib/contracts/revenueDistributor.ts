@@ -38,8 +38,12 @@ const REVENUE_DISTRIBUTOR_ABI = [
   "event RevenueDistributed(address indexed agent, uint256 totalRevenue, uint256 creatorAmount, uint256 stakersAmount, uint256 protocolAmount)",
 ] as const;
 
+// Default RevenueDistributor address (OLD contract that works)
+// NOTE: The new deployment (0x3C5B450591E1a02deA4Adbed259ba0bf72EaC782) is empty
+const DEFAULT_REVENUE_DISTRIBUTOR_ADDRESS = "0x0B987e64a7cB481Aad7500011503D5d0444b1707";
+
 const REVENUE_DISTRIBUTOR_ADDRESS = (
-  process.env.NEXT_PUBLIC_REVENUE_DISTRIBUTOR_ADDRESS || ""
+  process.env.NEXT_PUBLIC_REVENUE_DISTRIBUTOR_ADDRESS || DEFAULT_REVENUE_DISTRIBUTOR_ADDRESS
 ).trim();
 
 export async function getRevenueDistributorContract(
