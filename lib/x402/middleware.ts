@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRpcClient } from "thirdweb";
 import { avalancheFuji } from "thirdweb/chains";
-import { thirdwebClient, getFacilitatorUrl, getMerchantAddress } from "./facilitator";
+import { getThirdwebClient, getFacilitatorUrl, getMerchantAddress } from "./facilitator";
 
 export interface X402PaymentResult {
   paid: boolean;
@@ -88,7 +88,7 @@ async function verifyTransactionOnChain(
     }
 
     const rpcClient = getRpcClient({
-      client: thirdwebClient,
+      client: getThirdwebClient(),
       chain: avalancheFuji,
     });
 

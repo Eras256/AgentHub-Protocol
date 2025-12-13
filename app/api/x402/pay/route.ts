@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { settlePayment } from "thirdweb/x402";
-import { thirdwebX402Facilitator, avalancheFuji } from "@/lib/x402/facilitator";
+import { getThirdwebX402Facilitator, avalancheFuji } from "@/lib/x402/facilitator";
 import { PAYMENT_TIERS } from "@/lib/x402/middleware";
 
 export async function POST(req: NextRequest) {
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       payTo: process.env.THIRDWEB_SERVER_WALLET_ADDRESS,
       network: avalancheFuji,
       price: `$${paymentAmount}`,
-      facilitator: thirdwebX402Facilitator,
+      facilitator: getThirdwebX402Facilitator(),
     });
 
     if (result.status === 200) {

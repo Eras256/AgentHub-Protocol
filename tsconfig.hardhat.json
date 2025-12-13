@@ -4,9 +4,10 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node", "@nomicfoundation/hardhat-chai-matchers"]
   },
-  "include": ["hardhat.config.ts", "scripts/**/*", "test/**/*"],
+  "include": ["hardhat.config.ts", "scripts/**/*", "test/**/*", "test/**/*.d.ts"],
   "exclude": ["node_modules"]
 }
 

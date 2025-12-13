@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRpcClient } from "thirdweb";
 import { avalancheFuji } from "thirdweb/chains";
-import { thirdwebClient, getMerchantAddress } from "@/lib/x402/facilitator";
+import { getThirdwebClient, getMerchantAddress } from "@/lib/x402/facilitator";
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     // Get RPC client using Thirdweb v5
     const rpcClient = getRpcClient({
-      client: thirdwebClient,
+      client: getThirdwebClient(),
       chain: avalancheFuji,
     });
 

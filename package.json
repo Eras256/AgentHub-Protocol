@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.3",

@@ -197,7 +197,7 @@ export function useAgents() {
               successfulTransactions: Number(profile.successfulTransactions),
               createdAt: Number(profile.createdAt),
               metadataIPFS: profile.metadataIPFS,
-              kitePoAIHash: profile.kitePoAIHash || (ethers as any).constants?.HashZero || (ethers as any).ZeroHash || "0x0000000000000000000000000000000000000000000000000000000000000000", // Kite Chain PoAI proof hash
+              kitePoAIHash: profile.kitePoAIHash || "0x0000000000000000000000000000000000000000000000000000000000000000", // Kite Chain PoAI proof hash
             };
           });
         
@@ -247,7 +247,7 @@ export function useAgent(agentId?: string) {
             successfulTransactions: Number(agentProfile.successfulTransactions),
             createdAt: Number(agentProfile.createdAt),
             metadataIPFS: agentProfile.metadataIPFS,
-            kitePoAIHash: agentProfile.kitePoAIHash || (ethers as any).constants?.HashZero || (ethers as any).ZeroHash || "0x0000000000000000000000000000000000000000000000000000000000000000", // Kite Chain PoAI proof hash
+            kitePoAIHash: agentProfile.kitePoAIHash || "0x0000000000000000000000000000000000000000000000000000000000000000", // Kite Chain PoAI proof hash
           };
         }
         

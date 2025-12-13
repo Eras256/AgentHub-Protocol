@@ -63,6 +63,9 @@ importers:
       '@jest/globals':
         specifier: ^30.2.0
         version: 30.2.0
+      '@nomicfoundation/hardhat-chai-matchers':
+        specifier: ^2.1.0
+        version: 2.1.0(@nomicfoundation/hardhat-ethers@3.1.2(ethers@6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(hardhat@2.27.1(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.19.25)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10)))(chai@4.5.0)(ethers@6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(hardhat@2.27.1(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.19.25)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))
       '@nomicfoundation/hardhat-ethers':
         specifier: ^3.0.0
         version: 3.1.2(ethers@6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(hardhat@2.27.1(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.19.25)(typescript@5.9.3))(typescript@5.9.3)(utf-8-validate@5.0.10))
