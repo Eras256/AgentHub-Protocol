@@ -105,6 +105,7 @@ export default function DashboardPage() {
         successfulTransactions: agent.successfulTransactions || 0,
         createdAt: agent.createdAt || 0,
         metadataIPFS: agent.metadataIPFS,
+        kitePoAIHash: agent.kitePoAIHash, // Kite Chain PoAI proof hash
       };
     });
 

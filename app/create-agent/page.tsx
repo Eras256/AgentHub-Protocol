@@ -19,6 +19,7 @@ import { useRegisterAgent, useMinStake } from "@/lib/hooks/useAgents";
 import SuccessModal from "@/components/ui/SuccessModal";
 import { useRouter } from "next/navigation";
 import { ethers } from "ethers";
+import { generatePoAI } from "@/lib/kite/proof";
 
 export default function CreateAgentPage() {
   const address = useAddress();
@@ -116,11 +117,29 @@ export default function CreateAgentPage() {
       // Format: ipfs://originalAgentId|metadata
       const metadataIPFS = `ipfs://${agentId}|${agentData.description || 'No description'}`;
       
-      // Register agent on-chain (requires minStake from contract)
+      // Generate initial PoAI hash for agent registration
+      // This creates a verifiable proof that this agent was registered
+      let initialPoAIHash: string | undefined;
+      try {
+        const initialPoAI = await generatePoAI(
+          agentId,
+          "agent-registration", // Model identifier for registration
+          `Agent Registration: ${agentData.name} - ${agentData.type}`,
+          `Agent successfully registered on AgentHub Protocol with type: ${agentData.type}`
+        );
+        initialPoAIHash = initialPoAI.proofHash;
+        console.log("Generated initial PoAI hash:", initialPoAIHash);
+      } catch (poaiError) {
+        console.warn("Failed to generate PoAI hash, registering without PoAI:", poaiError);
+        // Continue without PoAI hash - agent will be registered with zero hash
+      }
+      
+      // Register agent on-chain with initial PoAI hash (if generated)
       const receipt = await registerAgentMutation.mutateAsync({
         agentId,
         metadataIPFS,
         stakeAmount: minStake, // Use real minStake from contract
+        kitePoAIHash: initialPoAIHash, // Include initial PoAI hash if available
       });
 
       // Get transaction hash - ethers v5 uses transactionHash, v6 uses hash

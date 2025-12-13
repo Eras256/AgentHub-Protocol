@@ -34,6 +34,7 @@ import {
 import { useAgent } from "@/lib/hooks/useAgents";
 import { useAddress } from "@thirdweb-dev/react";
 import { usePendingRevenue } from "@/lib/hooks/useRevenue";
+import PoAIHashDisplay from "@/components/agents/PoAIHashDisplay";
 
 export default function AgentDetailsPage() {
   const params = useParams();
@@ -83,6 +84,7 @@ export default function AgentDetailsPage() {
     owner: agentData.address || "",
     createdAt: agentData.createdAt ? new Date(agentData.createdAt * 1000).toISOString().split('T')[0] : "Unknown",
     stakedAmount: parseFloat(agentData.stakedAmount || "0"),
+    kitePoAIHash: agentData.kitePoAIHash || "0x0",
   } : null;
 
   // No performance data available yet - historical tracking not implemented
@@ -317,6 +319,14 @@ export default function AgentDetailsPage() {
         {/* Tab Content */}
         {selectedTab === "overview" && (
           <div className="space-y-6">
+            {/* PoAI Hash Display */}
+            {agent && (
+              <PoAIHashDisplay 
+                kitePoAIHash={agent.kitePoAIHash} 
+                className="w-full"
+              />
+            )}
+
             {/* Performance Chart */}
             <GlassCard>
               <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Earnings Over Time</h2>

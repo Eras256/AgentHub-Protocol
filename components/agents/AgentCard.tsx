@@ -17,6 +17,7 @@ import {
 import GlassCard from "@/components/effects/GlassCard";
 import { useAddStake } from "@/lib/hooks/useAgents";
 import { useSDK, useAddress } from "@thirdweb-dev/react";
+import PoAIHashDisplay from "@/components/agents/PoAIHashDisplay";
 
 interface AgentCardProps {
   agent: {
@@ -30,6 +31,7 @@ interface AgentCardProps {
     avatar: string;
     description: string;
     agentId?: string; // Optional agentId for contract operations
+    kitePoAIHash?: string; // Kite Chain PoAI proof hash
   };
 }
 
@@ -129,6 +131,16 @@ export default function AgentCard({ agent }: AgentCardProps) {
           <div className="text-xs text-gray-400 mt-1">Transactions</div>
         </div>
       </div>
+
+      {/* PoAI Hash Display */}
+      {agent.kitePoAIHash && (
+        <div className="mt-3 sm:mt-4">
+          <PoAIHashDisplay 
+            kitePoAIHash={agent.kitePoAIHash} 
+            compact={true}
+          />
+        </div>
+      )}
 
       {showAddStake ? (
         <div className="space-y-2 sm:space-y-3">

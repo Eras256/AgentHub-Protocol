@@ -154,6 +154,48 @@ export async function registerAgent(
   return tx.wait();
 }
 
+export async function registerAgentWithPoAI(
+  signer: ethers.Signer,
+  agentId: string,
+  metadataIPFS: string,
+  stakeAmount: string,
+  kitePoAIHash: string
+) {
+  const contract = await getAgentRegistryContract(signer);
+  const hashedAgentId = hashAgentId(agentId);
+  
+  // Convert PoAI hash string to bytes32
+  // The hash should already be in hex format (0x...), just ensure it's 32 bytes
+  const ethersAny = ethers as any;
+  let poaiHashBytes32: string;
+  
+  if (kitePoAIHash.startsWith('0x')) {
+    // Already a hex string, pad to 32 bytes (64 hex chars)
+    if (kitePoAIHash.length === 66) {
+      // Already 32 bytes
+      poaiHashBytes32 = kitePoAIHash;
+    } else {
+      // Pad with zeros
+      poaiHashBytes32 = ethersAny.utils?.hexZeroPad 
+        ? ethersAny.utils.hexZeroPad(kitePoAIHash, 32)
+        : kitePoAIHash.padEnd(66, '0');
+    }
+  } else {
+    // Not a hex string, convert it
+    poaiHashBytes32 = ethersAny.utils?.hexlify && ethersAny.utils?.hexZeroPad
+      ? ethersAny.utils.hexZeroPad(ethersAny.utils.hexlify(kitePoAIHash), 32)
+      : `0x${kitePoAIHash.padStart(64, '0')}`;
+  }
+  
+  const tx = await contract.registerAgentWithPoAI(
+    hashedAgentId,
+    metadataIPFS,
+    poaiHashBytes32,
+    { value: parseEther(stakeAmount) }
+  );
+  return tx.wait();
+}
+
 export async function getAgent(signerOrProvider: ethers.Signer | ethers.Provider, agentId: string) {
   const contract = await getAgentRegistryContract(signerOrProvider);
   const hashedAgentId = hashAgentId(agentId);

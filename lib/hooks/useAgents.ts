@@ -197,6 +197,7 @@ export function useAgents() {
               successfulTransactions: Number(profile.successfulTransactions),
               createdAt: Number(profile.createdAt),
               metadataIPFS: profile.metadataIPFS,
+              kitePoAIHash: profile.kitePoAIHash || (ethers as any).constants?.HashZero || (ethers as any).ZeroHash || "0x0000000000000000000000000000000000000000000000000000000000000000", // Kite Chain PoAI proof hash
             };
           });
         
@@ -246,6 +247,7 @@ export function useAgent(agentId?: string) {
             successfulTransactions: Number(agentProfile.successfulTransactions),
             createdAt: Number(agentProfile.createdAt),
             metadataIPFS: agentProfile.metadataIPFS,
+            kitePoAIHash: agentProfile.kitePoAIHash || (ethers as any).constants?.HashZero || (ethers as any).ZeroHash || "0x0000000000000000000000000000000000000000000000000000000000000000", // Kite Chain PoAI proof hash
           };
         }
         
@@ -269,18 +271,28 @@ export function useRegisterAgent() {
       agentId,
       metadataIPFS,
       stakeAmount,
+      kitePoAIHash,
     }: {
       agentId: string;
       metadataIPFS: string;
       stakeAmount: string;
+      kitePoAIHash?: string; // Optional initial PoAI hash
     }) => {
       if (!sdk) throw new Error("SDK not initialized");
       
       const signer = await sdk.getSigner();
       if (!signer) throw new Error("Signer not available");
       
-      const tx = await registerAgent(signer, agentId, metadataIPFS, stakeAmount);
-      return tx;
+      // Use registerAgentWithPoAI if PoAI hash is provided, otherwise use registerAgent
+      const { registerAgent, registerAgentWithPoAI } = await import("@/lib/contracts/agentRegistry");
+      
+      if (kitePoAIHash) {
+        const tx = await registerAgentWithPoAI(signer, agentId, metadataIPFS, stakeAmount, kitePoAIHash);
+        return tx;
+      } else {
+        const tx = await registerAgent(signer, agentId, metadataIPFS, stakeAmount);
+        return tx;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["agents", address] });
